@@ -940,7 +940,7 @@ class InlineActionModal extends Modal {
 
 		wrapper.createDiv({ cls: "ch-label", text: "Extra instructions (optional)" });
 		const extraInput = wrapper.createEl("textarea", { cls: "ch-textarea" });
-		extraInput.placeholder = "e.g. Focus on Python examples, keep it under 200 words...";
+		extraInput.placeholder = "e.g. Keep it under 200 words, use simple analogies...";
 		extraInput.rows = 2;
 		extraInput.addEventListener("input", () => { this.extraValue = extraInput.value; });
 		extraInput.addEventListener("keydown", (e) => {
@@ -1040,7 +1040,7 @@ class FullNoteActionModal extends Modal {
 
 		sep.createDiv({ cls: "ch-label", text: "Extra instructions (optional)" });
 		const extraInput = sep.createEl("textarea", { cls: "ch-textarea" });
-		extraInput.placeholder = "e.g. Focus on code-related questions, make exercises harder...";
+		extraInput.placeholder = "e.g. Focus on open-ended questions, make exercises harder...";
 		extraInput.rows = 2;
 		extraInput.addEventListener("input", () => { this.extraValue = extraInput.value; });
 		extraInput.addEventListener("keydown", (e) => {
@@ -1142,7 +1142,7 @@ class FillNoteModal extends Modal {
 		wrapper.createDiv({ cls: "ch-label", text: this.backlinkSources.length > 0 ? "Context (from backlinks, editable)" : "Context (describe what this note should cover)" });
 		const ctxInput = wrapper.createEl("textarea", { cls: "ch-textarea ch-textarea-sm" });
 		ctxInput.value = this.contextValue;
-		ctxInput.placeholder = "e.g. This note should explain how binary search works, with examples in Python...";
+		ctxInput.placeholder = "e.g. This note should explain how compound interest works, with step-by-step examples...";
 		ctxInput.rows = 4;
 		ctxInput.addEventListener("input", () => { this.contextValue = ctxInput.value; });
 
@@ -1242,7 +1242,7 @@ class TopicGeneratorModal extends Modal {
 
 		wrapper.createDiv({ cls: "ch-label", text: "Topic" });
 		const topicInput = wrapper.createEl("input", { type: "text", cls: "ch-input" });
-		topicInput.placeholder = "e.g. Binary Search Trees, Docker Networking, Calculus Integration...";
+		topicInput.placeholder = "e.g. Photosynthesis, the Silk Road, compound interest...";
 		topicInput.addEventListener("input", () => { this.topicValue = topicInput.value; this.updateSubmitButton(); });
 		topicInput.addEventListener("keydown", (e) => {
 			e.stopPropagation();
@@ -1266,11 +1266,11 @@ class TopicGeneratorModal extends Modal {
 		this.multiBtn.addEventListener("click", () => { this.isMulti = true; this.updateFormatButtons(); });
 		this.updateFormatButtons();
 
-		sep.createDiv({ cls: "ch-hint", text: "Multi-note: Claude decomposes the topic into linked sub-notes in a folder" });
+		sep.createDiv({ cls: "ch-hint", text: "Multi-note: the AI decomposes the topic into linked sub-notes in a folder" });
 
 		wrapper.createDiv({ cls: "ch-label", text: "Extra instructions (optional)" });
 		const extraInput = wrapper.createEl("textarea", { cls: "ch-textarea" });
-		extraInput.placeholder = "e.g. Focus on practical examples, target intermediate level, include Python code...";
+		extraInput.placeholder = "e.g. Focus on practical examples, keep it beginner friendly...";
 		extraInput.rows = 2;
 		extraInput.addEventListener("input", () => { this.extraValue = extraInput.value; });
 		extraInput.addEventListener("keydown", (e) => {
@@ -1378,7 +1378,7 @@ class FolderGeneratorModal extends Modal {
 
 		wrapper.createDiv({ cls: "ch-label", text: "Scenario / Prompt" });
 		const scenarioInput = wrapper.createEl("textarea", { cls: "ch-textarea ch-textarea-lg" });
-		scenarioInput.placeholder = "e.g. Design a website that shows the current time, needs auth, available globally, never goes down...\n\nOr: Explain the SOLID principles with real-world examples...\n\nOr: Cover the sliding window pattern for arrays and strings...";
+		scenarioInput.placeholder = "e.g. Explain how vaccines work, from immune system basics to modern types...\n\nOr: A beginner's guide to reading company financial statements...\n\nOr: The causes and consequences of the French Revolution...";
 		scenarioInput.rows = 5;
 		scenarioInput.addEventListener("input", () => { this.scenarioValue = scenarioInput.value; this.updateSubmitButton(); });
 		scenarioInput.addEventListener("keydown", (e) => {
@@ -1396,7 +1396,7 @@ class FolderGeneratorModal extends Modal {
 
 		sep.createDiv({ cls: "ch-label", text: "Extra instructions (optional)" });
 		const extraInput = sep.createEl("textarea", { cls: "ch-textarea" });
-		extraInput.placeholder = "e.g. Target senior-level depth, include Java examples, focus on AWS services...";
+		extraInput.placeholder = "e.g. Aim for expert-level depth, include real-world case studies...";
 		extraInput.rows = 2;
 		extraInput.addEventListener("input", () => { this.extraValue = extraInput.value; });
 		extraInput.addEventListener("keydown", (e) => {
@@ -1497,7 +1497,7 @@ class FolderAnalysisModal extends Modal {
 		const sep = wrapper.createDiv({ cls: "ch-sep" });
 		sep.createDiv({ cls: "ch-label", text: "Additional content (articles, context, instructions)" });
 		const extraInput = sep.createEl("textarea", { cls: "ch-textarea ch-textarea-xl" });
-		extraInput.placeholder = "Paste articles, blog posts, or extra context here...\n\nFor Design Hole Finder: optional, leave empty to analyze existing notes.\nFor Enrich from Articles: paste the source material here.";
+		extraInput.placeholder = "Paste articles, blog posts, or extra context here...\n\nOptional for most modes: leave empty to analyze the existing notes as they are.";
 		extraInput.rows = 8;
 		extraInput.addEventListener("input", () => { this.extraValue = extraInput.value; });
 		extraInput.addEventListener("keydown", (e) => {
@@ -1581,7 +1581,7 @@ class AddTopicModal extends Modal {
 
 		wrapper.createDiv({ cls: "ch-label", text: "Topic to add" });
 		const topicInput = wrapper.createEl("textarea", { cls: "ch-textarea" });
-		topicInput.placeholder = "e.g. Write-Ahead Log (WAL)\n\nThe missing topic that should be added to this folder. A single note will be generated using existing notes as context.";
+		topicInput.placeholder = "e.g. The placebo effect\n\nThe missing topic that should be added to this folder. A single note will be generated using existing notes as context.";
 		topicInput.rows = 3;
 		topicInput.addEventListener("input", () => { this.topicValue = topicInput.value; this.updateSubmitButton(); });
 		topicInput.addEventListener("keydown", (e) => {
@@ -1597,7 +1597,7 @@ class AddTopicModal extends Modal {
 		const sep = wrapper.createDiv({ cls: "ch-sep" });
 		sep.createDiv({ cls: "ch-label", text: "Extra instructions (optional)" });
 		const extraInput = sep.createEl("textarea", { cls: "ch-textarea" });
-		extraInput.placeholder = "e.g. Focus on crash recovery aspects, include Go code examples...";
+		extraInput.placeholder = "e.g. Focus on the practical implications, include memorable examples...";
 		extraInput.rows = 2;
 		extraInput.addEventListener("input", () => { this.extraValue = extraInput.value; });
 		extraInput.addEventListener("keydown", (e) => {
@@ -1703,7 +1703,7 @@ class ExpandFolderModal extends Modal {
 
 		wrapper.createDiv({ cls: "ch-label", text: "What to add" });
 		const dirInput = wrapper.createEl("textarea", { cls: "ch-textarea ch-textarea-md" });
-		dirInput.placeholder = "e.g. Add notes covering concurrency patterns, thread safety, and lock-free data structures\n\nOr: Expand with real-world case studies and failure post-mortems\n\nOr: Add notes on the networking and security aspects I haven't covered yet";
+		dirInput.placeholder = "e.g. Add notes covering common misconceptions and frequently asked questions\n\nOr: Expand with real-world case studies and historical context\n\nOr: Add notes on the practical applications I haven't covered yet";
 		dirInput.rows = 4;
 		dirInput.addEventListener("input", () => { this.directionValue = dirInput.value; this.updateSubmitButton(); });
 		dirInput.addEventListener("keydown", (e) => {
@@ -1720,7 +1720,7 @@ class ExpandFolderModal extends Modal {
 		const sep = wrapper.createDiv({ cls: "ch-sep" });
 		sep.createDiv({ cls: "ch-label", text: "Extra instructions (optional)" });
 		const extraInput = sep.createEl("textarea", { cls: "ch-textarea" });
-		extraInput.placeholder = "e.g. Target senior-level depth, include Python examples...";
+		extraInput.placeholder = "e.g. Aim for expert-level depth, include concrete examples...";
 		extraInput.rows = 2;
 		extraInput.addEventListener("input", () => { this.extraValue = extraInput.value; });
 		extraInput.addEventListener("keydown", (e) => {
@@ -1817,7 +1817,7 @@ class NoteAnalysisModal extends Modal {
 		const sep = wrapper.createDiv({ cls: "ch-sep" });
 		sep.createDiv({ cls: "ch-label", text: "Additional content (articles, context, instructions)" });
 		const extraInput = sep.createEl("textarea", { cls: "ch-textarea ch-textarea-xl" });
-		extraInput.placeholder = "Paste articles, blog posts, or extra context here...\n\nFor Design Hole Finder: optional, leave empty to analyze the note as-is.\nFor Enrich from Articles: paste the source material here.";
+		extraInput.placeholder = "Paste articles, blog posts, or extra context here...\n\nOptional for most modes: leave empty to analyze the note as it is.";
 		extraInput.rows = 8;
 		extraInput.addEventListener("input", () => { this.extraValue = extraInput.value; });
 		extraInput.addEventListener("keydown", (e) => {
@@ -1970,7 +1970,7 @@ class QueueStatusModal extends Modal {
 					const tail = output.length > 2000 ? "...\n" + output.slice(-2000) : output;
 					this.previewEl.setText(tail);
 				} else {
-					this.previewEl.setText("Waiting for Claude to respond...");
+					this.previewEl.setText(`Waiting for ${PROVIDER_LABELS[this.plugin.settings.aiProvider]} to respond...`);
 				}
 				this.previewEl.scrollTop = this.previewEl.scrollHeight;
 			} else {
@@ -2562,7 +2562,7 @@ export default class ClaudeExplainerPlugin extends Plugin {
 				if (selection) {
 					// Individual inline action entries in a submenu
 					menu.addItem((item) => {
-						const sub = (item.setTitle("Claude actions")
+						const sub = (item.setTitle("AI actions")
 							.setIcon("sparkles") as MenuItem & { setSubmenu(): Menu })
 							.setSubmenu();
 
@@ -3240,7 +3240,7 @@ ${extraInstructions ? `\nAdditional context: ${extraInstructions}` : ""}`;
 				subtopics = JSON.parse(jsonStr) as typeof subtopics;
 			} catch {
 				new Notice("Failed to parse topic decomposition. Falling back to single note.", 8000);
-				console.error("Claude topic decomposition parse error. Raw response:", rawResponse);
+				console.error("Topic decomposition parse error. Raw response:", rawResponse);
 				void this.generateTopicNotes(topic, mode, false, folderPath, extraInstructions);
 				return;
 			}
@@ -3327,7 +3327,7 @@ Use [[Note Title]] format for all links to sub-notes.` + getOutputRules();
 		} catch (err: unknown) {
 			const msg = err instanceof Error ? err.message : String(err);
 			new Notice(`Failed to plan topic notes: ${msg}`, 8000);
-			console.error("Claude topic planning error:", err);
+			console.error("Topic planning error:", err);
 		}
 	}
 
