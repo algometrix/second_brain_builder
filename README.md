@@ -346,7 +346,7 @@ npm install
 npm run dev     # watch mode, rebuilds on save
 ```
 
-Use the [Hot-Reload plugin](https://github.com/pjeby/hot-reload) for instant reloads in Obsidian. All plugin source lives in `main.ts`.
+Use the [Hot-Reload plugin](https://github.com/pjeby/hot-reload) for instant reloads in Obsidian. Source lives in `src/` (entry point `src/main.ts`), bundled to `main.js`.
 
 ## Troubleshooting
 

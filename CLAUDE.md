@@ -18,9 +18,19 @@ The build produces `main.js` (CJS bundle) from the single entry point `main.ts` 
 
 ## Project Structure
 
-This is a single-file plugin. All source code lives in `main.ts` (~3800 lines). There is no `src/` directory.
+Source lives in `src/`, bundled to a single root `main.js` by esbuild (entry point `src/main.ts`).
 
-- **main.ts** -- entire plugin: types, UI modals, queue processor, CLI spawning, output post-processing, settings tab
+- **src/main.ts** -- `ClaudeExplainerPlugin`: commands, context menus, the generation queue, CLI/Ollama providers, note orchestration
+- **src/types.ts** -- shared interfaces: modes, inline actions, queue items, settings (+ defaults), provider labels
+- **src/inline-actions.ts** -- the `INLINE_ACTIONS` catalog (expand, simplify, add diagram, ...)
+- **src/output-rules.ts** -- formatting rules appended to every prompt (`getOutputRules`, inline/append variants)
+- **src/cli.ts** -- typed `child_process.spawn` boundary (`SpawnedCliProcess`, `spawnCli`)
+- **src/logger.ts** -- in-memory ring logger behind the "Enable logging" setting
+- **src/utils.ts** -- filename sanitizing, JSON array extraction, empty-note detection
+- **src/ui.ts** -- shared modal helpers (title, mode cards, searchable mode grid)
+- **src/fixers.ts** -- output post-processing fixers (code fences, mermaid, callouts, dataview, currency)
+- **src/modals/** -- one file per modal family: `generation.ts`, `folder.ts`, `analysis.ts`, `queue.ts`, `system-design.ts`
+- **src/settings-tab.ts** -- the settings UI, including per-provider setup guides
 - **modes.json** -- note generation modes loaded as `BUILTIN_MODES` at build time. Gitignored; resolved before every build by `scripts/sync-modes.js` (from `modes.config.json`'s `modesFile` if present, else an existing `modes.json`, else `modes.sample.json`)
 - **modes.sample.json** -- committed sample set of general-purpose modes (Explain, Deep Inquiry, Feynman, etc.); the default build input for fresh clones
 - **modes.config.json** -- optional, gitignored; `{ "modesFile": "<path>" }` points the build at a personal modes file (conventionally `modes.personal.json`, also gitignored)
