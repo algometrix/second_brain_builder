@@ -1,6 +1,6 @@
 {
   "name": "second-brain-builder",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Obsidian plugin that grows your vault into a linked knowledge graph using Claude Code, Gemini, Codex, or Ollama",
   "main": "main.js",
   "scripts": {
