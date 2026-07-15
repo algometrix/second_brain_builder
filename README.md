@@ -30,7 +30,7 @@ If the plugin says it cannot find the CLI, see [Troubleshooting](#troubleshootin
 
 ## Features and When to Use Them
 
-### Generate Knowledge Notes in Folder (the headline feature)
+### Generate Knowledge Notes in Folder
 
 Give the plugin a topic, a pasted paragraph, or a whole article, pick a teaching mode and a target folder, and it builds a complete, interlinked mini-textbook. Run it from the command palette (**"Generate knowledge notes in folder with AI"**) or by right-clicking a folder.
 
