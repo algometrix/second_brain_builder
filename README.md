@@ -306,6 +306,15 @@ Run `fix-all.js` without `--fix` after a large batch generation, or when a merma
 
 The selected text and surrounding note content are sent to whichever backend you configure. With Claude, Gemini, or Codex, that means the respective cloud API, under your own account and their terms. With Ollama, everything stays on your machine. The plugin itself collects nothing.
 
+## Security
+
+The plugin spawns the AI CLI you configure, which is why Obsidian shows a "shell execution" notice for it. The design limits what that process can do:
+
+- Note content is passed to the CLI via stdin, never interpolated into a shell command line.
+- Each CLI runs in a restricted mode: Claude with `--disallowedTools` (no file edits, no shell), Gemini with `--approval-mode plan`, Codex with `--sandbox read-only`.
+- Only the executable path and model name from your own settings are used to build the command; the plugin never runs commands supplied by note content or by the model's output.
+- All generated content is written through Obsidian's vault API, not directly to disk.
+
 ## Development
 
 ```bash
