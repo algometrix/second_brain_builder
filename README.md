@@ -1,6 +1,16 @@
 # Second Brain Builder (Obsidian Plugin)
 
+![GitHub release](https://img.shields.io/github/v/release/algometrix/second_brain_builder)
+![GitHub downloads](https://img.shields.io/github/downloads/algometrix/second_brain_builder/total)
+![License](https://img.shields.io/github/license/algometrix/second_brain_builder)
+
 Turn any topic into a folder of interlinked, deep-dive study notes: a generated index hub, mermaid concept maps, and wiki-links that light up Obsidian's graph view. Powered by an AI CLI (Claude Code, Gemini, or Codex) or a fully local Ollama model. It also explains selections into linked notes and enhances text in place. Desktop only. Works on Windows, macOS, and Linux.
+
+One prompt ("why is the dollar the world's reserve currency?") produced this index hub and the 16 linked notes behind it:
+
+<img src="assets/links.png" alt="Generated index hub with grouped wiki-links to every note in the series" width="720">
+
+<img src="assets/set_of_notes.png" alt="File explorer showing the folder of generated, interlinked notes" width="380">
 
 ## Quick Start
 
@@ -30,7 +40,17 @@ If the plugin says it cannot find the CLI, see [Troubleshooting](#troubleshootin
 
 ### Generate Knowledge Notes in Folder
 
-Give the plugin a topic, a pasted paragraph, or a whole article, pick a teaching mode and a target folder, and it builds a complete, interlinked mini-textbook. Run it from the command palette (**"Generate knowledge notes in folder with AI"**) or by right-clicking a folder.
+Give the plugin a topic, a pasted paragraph, or a whole article, pick a teaching mode and a target folder, and it builds a complete, interlinked mini-textbook. Run it from the command palette (**"Generate knowledge notes in folder with AI"**) or by right-clicking a folder:
+
+<img src="assets/context_menu.png" alt="Folder right-click menu with Generate knowledge notes, Add topic, Expand folder, and Analyze folder entries" width="340">
+
+Describe what you want to learn and pick a note style:
+
+<img src="assets/knowledge_notes.png" alt="Generate knowledge notes modal with a scenario prompt and note style picker" width="600">
+
+A few minutes later the folder contains the full series. Each note has YAML frontmatter, tags, and cross-links to its siblings:
+
+<img src="assets/notes.png" alt="A generated note with frontmatter properties, tags, and a structured overview" width="720">
 
 Here is what happens under the hood:
 
@@ -44,13 +64,17 @@ Use this when you want to learn a new subject properly: one command turns "expla
 
 ### Explain Selection (note creation)
 
-Select a word or phrase, run **"Explain selection with AI"**, and pick one or more modes. The plugin creates a new note in the same folder, writes the AI output into it, and replaces your selection with a `[[wiki-link]]`. If a note with that name already exists, it links to it instead. You can select several modes at once to generate multiple takes on the same topic.
+Select a word or phrase, run **"Explain selection with AI"** (or right-click the selection), and pick one or more modes. The plugin creates a new note in the same folder, writes the AI output into it, and replaces your selection with a `[[wiki-link]]`. If a note with that name already exists, it links to it instead. You can select several modes at once to generate multiple takes on the same topic.
+
+<img src="assets/enhance.png" alt="Selection right-click menu highlighting Create note from the selected phrase" width="720">
 
 Use this when a term deserves its own note and you want your vault to grow into a linked knowledge base while you read.
 
 ### Enhance Selection (inline actions)
 
-Run **"Enhance selection with AI"** to transform the selected text in place, or insert the result below it.
+Run **"Enhance selection with AI"** to transform the selected text in place, or insert the result below it. All nine actions are also one right-click away under **AI actions**:
+
+<img src="assets/actions.png" alt="AI actions submenu with Expand, Simplify, Add Examples, Add Diagram, Summarize, Challenge, Fix and Polish, ELI5, and Translate to Code" width="720">
 
 | Action | Use it when |
 |---|---|
