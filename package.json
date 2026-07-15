@@ -1,0 +1,18 @@
+{
+  "name": "ai-explainer",
+  "version": "1.0.0",
+  "description": "Obsidian plugin to generate explanation notes using Claude Code, Gemini, Codex, or Ollama",
+  "main": "main.js",
+  "scripts": {
+    "dev": "node scripts/sync-modes.js && node esbuild.config.mjs",
+    "build": "node scripts/sync-modes.js && tsc -noEmit -skipLibCheck && node esbuild.config.mjs production"
+  },
+  "devDependencies": {
+    "@types/node": "^16.11.6",
+    "builtin-modules": "^3.3.0",
+    "esbuild": "0.17.3",
+    "obsidian": "latest",
+    "tslib": "2.4.0",
+    "typescript": "4.7.4"
+  }
+}

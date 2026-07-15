@@ -1,0 +1,9 @@
+{
+  "id": "ai-explainer",
+  "name": "AI Explainer",
+  "version": "1.0.0",
+  "minAppVersion": "0.15.0",
+  "description": "Select any word or phrase to generate detailed explanation notes using Claude Code, Gemini, Codex, or a local Ollama model, with multiple teaching styles.",
+  "author": "algometrix",
+  "isDesktopOnly": true
+}

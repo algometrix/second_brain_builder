@@ -1,0 +1,9 @@
+node_modules/
+main.js
+.claude/
+data.json
+
+# Personal mode definitions -- see "Note Modes" in README.md
+modes.json
+modes.config.json
+modes.personal.json
