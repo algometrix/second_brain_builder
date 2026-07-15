@@ -1,6 +1,8 @@
 // Prepares modes.json (the build input) before every build.
 //
 // Resolution order:
+//   0. --sample flag -> copy modes.sample.json to modes.json (for release builds,
+//      so personal modes never end up in published artifacts)
 //   1. modes.config.json exists -> copy its "modesFile" to modes.json
 //   2. modes.json already exists -> leave it as-is
 //   3. Neither -> copy modes.sample.json to modes.json
@@ -32,7 +34,10 @@ function copyValidated(source) {
   fs.writeFileSync(target, content);
 }
 
-if (fs.existsSync(configPath)) {
+if (process.argv.includes('--sample')) {
+  copyValidated(samplePath);
+  console.log('modes.json updated from modes.sample.json (release build)');
+} else if (fs.existsSync(configPath)) {
   const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
   if (!config.modesFile) {
     console.error('modes.config.json must contain a "modesFile" property.');

@@ -1,11 +1,12 @@
 {
   "name": "second-brain-builder",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Obsidian plugin that grows your vault into a linked knowledge graph using Claude Code, Gemini, Codex, or Ollama",
   "main": "main.js",
   "scripts": {
     "dev": "node scripts/sync-modes.js && node esbuild.config.mjs",
-    "build": "node scripts/sync-modes.js && tsc -noEmit -skipLibCheck && node esbuild.config.mjs production"
+    "build": "node scripts/sync-modes.js && tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+    "build:release": "node scripts/sync-modes.js --sample && tsc -noEmit -skipLibCheck && node esbuild.config.mjs production"
   },
   "devDependencies": {
     "@types/node": "^16.11.6",

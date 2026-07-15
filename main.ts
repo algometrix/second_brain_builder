@@ -37,6 +37,15 @@ interface InlineActionConfig {
 	extraInstructions: string;
 }
 
+interface PendingLinkReplacement {
+	editor: Editor;
+	from: EditorPosition;
+	to: EditorPosition;
+	selection: string;
+	linksText: string;
+	applied: boolean;
+}
+
 interface NoteQueueItem {
 	type: "note";
 	selection: string;
@@ -45,6 +54,7 @@ interface NoteQueueItem {
 	fullPrompt: string;
 	mode: NoteMode;
 	editor: Editor;
+	linkReplacement?: PendingLinkReplacement;
 }
 
 interface InlineQueueItem {
@@ -2503,10 +2513,9 @@ export default class ClaudeExplainerPlugin extends Plugin {
 				const from = editor.getCursor("from");
 				const to = editor.getCursor("to");
 				new NoteCreatorModal(this.app, this.getStandardModes(), selection, this.settings.lastModeId || this.settings.defaultModeId, (configs) => {
-					const links = configs.map(c => `[[${c.title}]]`).join(" | ");
-					editor.replaceRange(links, from, to);
+					const linkReplacement = this.buildLinkReplacement(editor, from, to, selection, configs);
 					for (const config of configs) {
-						this.enqueueNote(editor, view, selection, config);
+						this.enqueueNote(editor, view, selection, config, linkReplacement);
 					}
 				}, (modeId) => this.saveLastMode(modeId)).open();
 			},
@@ -2669,10 +2678,9 @@ export default class ClaudeExplainerPlugin extends Plugin {
 							.setIcon("book-open")
 							.onClick(() => {
 								new NoteCreatorModal(this.app, this.getStandardModes(), selection, this.settings.lastModeId || this.settings.defaultModeId, (configs) => {
-									const links = configs.map(c => `[[${c.title}]]`).join(" | ");
-									editor.replaceRange(links, from, to);
+									const linkReplacement = this.buildLinkReplacement(editor, from, to, selection, configs);
 									for (const config of configs) {
-										this.enqueueNote(editor, view, selection, config);
+										this.enqueueNote(editor, view, selection, config, linkReplacement);
 									}
 								}, (modeId) => this.saveLastMode(modeId)).open();
 							});
@@ -3006,7 +3014,38 @@ export default class ClaudeExplainerPlugin extends Plugin {
 		}
 	}
 
-	private async enqueueNote(editor: Editor, view: MarkdownView, selection: string, config: NoteConfig) {
+	private buildLinkReplacement(
+		editor: Editor,
+		from: EditorPosition,
+		to: EditorPosition,
+		selection: string,
+		configs: NoteConfig[]
+	): PendingLinkReplacement {
+		return {
+			editor,
+			from,
+			to,
+			selection,
+			linksText: configs.map(c => `[[${c.title}]]`).join(" | "),
+			applied: false,
+		};
+	}
+
+	private applyLinkReplacement(replacement: PendingLinkReplacement | undefined) {
+		if (!replacement || replacement.applied) return;
+		replacement.applied = true;
+		try {
+			if (replacement.editor.getRange(replacement.from, replacement.to) !== replacement.selection) {
+				logger.info("Selection changed since queuing; skipping wiki-link insertion.");
+				return;
+			}
+			replacement.editor.replaceRange(replacement.linksText, replacement.from, replacement.to);
+		} catch (err) {
+			logger.error(`Could not insert wiki-link: ${err instanceof Error ? err.message : String(err)}`);
+		}
+	}
+
+	private async enqueueNote(editor: Editor, view: MarkdownView, selection: string, config: NoteConfig, linkReplacement?: PendingLinkReplacement) {
 		const file = view.file;
 		if (!file) {
 			new Notice("No active file.");
@@ -3028,6 +3067,7 @@ export default class ClaudeExplainerPlugin extends Plugin {
 		if (existing instanceof TFile) {
 			const existingContent = await this.app.vault.read(existing);
 			if (!isNoteEffectivelyEmpty(existingContent)) {
+				this.applyLinkReplacement(linkReplacement);
 				new Notice(`Note "${noteName}" already has content. Linked to it.`);
 				return;
 			}
@@ -3055,6 +3095,7 @@ export default class ClaudeExplainerPlugin extends Plugin {
 			fullPrompt,
 			mode: config.mode,
 			editor,
+			linkReplacement,
 		});
 
 		const pos = this.queue.length + (this.isProcessing ? 1 : 0);
@@ -4005,6 +4046,9 @@ Rules:
 						await this.app.vault.create(item.newNotePath, content);
 						new Notice(`Created: ${item.noteName} (${this.queue.length} remaining)`);
 					}
+					if (item.type === "note") {
+						this.applyLinkReplacement(item.linkReplacement);
+					}
 					if (item.type === "topic-note" && item.renameFromContent) {
 						const h1 = content.match(/^#\s+(.+)$/m);
 						if (h1) {
@@ -4130,13 +4174,19 @@ Rules:
 			});
 			proc.stderr.on("data", (data: Buffer) => { stderr += data.toString(); });
 
+			const cliNotFoundError = () => new Error(
+				`${providerLabel} CLI not found (looked for "${execPath}"). Install it, or set its full path in Settings -> Second Brain Builder. See the README's Troubleshooting section for PATH fixes.`
+			);
+
 			proc.on("close", (code: number) => {
 				logger.info(`Process exited with code ${code}, stdout: ${stdout.length} chars, stderr: ${stderr.length} chars`);
 				if (code !== 0) {
 					const errorDetail = stderr || stdout || `Process exited with code ${code}`;
 					logger.error(`Exit code ${code}. Stderr: ${stderr.slice(0, 500)}`);
 					logger.error(`Exit code ${code}. Stdout: ${stdout.slice(0, 500)}`);
-					reject(new Error(errorDetail.trim()));
+					const cliMissing = code === 127 || code === 9009 ||
+						/is not recognized as an internal or external command|command not found|No such file or directory/i.test(errorDetail);
+					reject(cliMissing ? cliNotFoundError() : new Error(errorDetail.trim()));
 				} else {
 					let result = stdout.trim();
 					if (codexOutputFile) {
@@ -4153,7 +4203,7 @@ Rules:
 
 			proc.on("error", (err: Error) => {
 				logger.error(`Spawn error: ${err.message}`);
-				reject(err);
+				reject((err as NodeJS.ErrnoException).code === "ENOENT" ? cliNotFoundError() : err);
 			});
 
 			proc.stdin.write(stdinPayload);
