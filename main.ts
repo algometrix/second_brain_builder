@@ -374,6 +374,23 @@ Formatting rules:
 
 type AIProvider = "claude" | "gemini" | "codex" | "ollama";
 
+// Minimal typed view of the child_process surface this plugin uses. Spawning
+// goes through this boundary so the rest of the code never touches untyped
+// Node.js APIs directly.
+interface SpawnedCliProcess {
+	stdout: { on(event: "data", callback: (data: Buffer) => void): void };
+	stderr: { on(event: "data", callback: (data: Buffer) => void): void };
+	stdin: { write(data: string): void; end(): void };
+	on(event: "close", callback: (code: number) => void): void;
+	on(event: "error", callback: (err: Error & { code?: string }) => void): void;
+}
+
+const spawnCli = spawn as unknown as (
+	command: string,
+	args: string[],
+	options: { shell: boolean; windowsHide: boolean }
+) => SpawnedCliProcess;
+
 const PROVIDER_LABELS: Record<AIProvider, string> = { claude: "Claude", gemini: "Gemini", codex: "Codex", ollama: "Ollama" };
 
 interface ClaudeExplainerSettings {
@@ -2866,7 +2883,7 @@ export default class ClaudeExplainerPlugin extends Plugin {
 			"Second Brain Builder needs an AI backend before first use: the Claude Code CLI (default) or a free local Ollama server. Click here to open settings and follow the setup guide.",
 			0
 		);
-		notice.noticeEl.addEventListener("click", () => {
+		notice.messageEl.addEventListener("click", () => {
 			notice.hide();
 			this.openSettingsTab();
 		});
@@ -4033,7 +4050,7 @@ Rules:
 			logger.info(`Spawning [${providerLabel}]: ${execPath} ${args.map(a => a.length > 40 ? a.slice(0, 40) + "..." : a).join(" ")}`);
 			logger.info(`Stdin prompt length: ${prompt.length} chars`);
 
-			const proc = spawn(execPath, args, {
+			const proc = spawnCli(execPath, args, {
 				shell: true,
 				windowsHide: true,
 			});
@@ -4077,9 +4094,9 @@ Rules:
 				}
 			});
 
-			proc.on("error", (err: Error) => {
+			proc.on("error", (err) => {
 				logger.error(`Spawn error: ${err.message}`);
-				reject((err as NodeJS.ErrnoException).code === "ENOENT" ? cliNotFoundError() : err);
+				reject(err.code === "ENOENT" ? cliNotFoundError() : err);
 			});
 
 			proc.stdin.write(stdinPayload);
