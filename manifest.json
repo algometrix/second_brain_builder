@@ -1,7 +1,7 @@
 {
   "id": "second-brain-builder",
   "name": "Second Brain Builder",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "minAppVersion": "1.4.0",
   "description": "Grow your vault into a linked knowledge graph: select any word or phrase to generate detailed, wiki-linked explanation notes using Claude Code, Gemini, Codex, or a local Ollama model.",
   "author": "algometrix",
