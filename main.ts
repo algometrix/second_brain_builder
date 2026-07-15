@@ -401,7 +401,7 @@ const DEFAULT_SETTINGS: ClaudeExplainerSettings = {
 	ollamaModel: "llama3",
 };
 
-const LOG_PREFIX = "[AI Explainer]";
+const LOG_PREFIX = "[Second Brain Builder]";
 const MAX_LOG_LINES = 500;
 
 class Logger {
@@ -2421,7 +2421,7 @@ class LogViewerModal extends Modal {
 	onOpen() {
 		const { contentEl } = this;
 		contentEl.addClass("ch-modal");
-		setModalTitle(this, "AI Explainer Logs");
+		setModalTitle(this, "Second Brain Builder Logs");
 
 		const btnRow = contentEl.createDiv({ attr: { style: "margin-bottom: 8px; display: flex; gap: 8px;" } });
 		const copyBtn = btnRow.createEl("button", { text: "Copy to clipboard" });
@@ -3221,7 +3221,7 @@ export default class ClaudeExplainerPlugin extends Plugin {
 			}
 
 			indexLines.push("---\n");
-			indexLines.push("*Scaffold created by AI Explainer.*\n");
+			indexLines.push("*Scaffold created by Second Brain Builder.*\n");
 
 			const indexPath = normalizePath(`${basePath}/${name}.md`);
 			const existingIndex = this.app.vault.getAbstractFileByPath(indexPath);
@@ -4087,7 +4087,7 @@ Rules:
 				// Codex has no system prompt flag in exec mode; prepend it to the stdin prompt.
 				// Its stdout interleaves progress logs with output, so the final message is
 				// captured via --output-last-message instead.
-				codexOutputFile = join(tmpdir(), `ai-explainer-codex-${Date.now()}.md`);
+				codexOutputFile = join(tmpdir(), `second-brain-builder-codex-${Date.now()}.md`);
 				args = [
 					"exec",
 					"--sandbox", "read-only",
@@ -4243,7 +4243,7 @@ class ClaudeExplainerSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 
-		containerEl.createEl("h2", { text: "AI Explainer Settings" });
+		containerEl.createEl("h2", { text: "Second Brain Builder Settings" });
 
 		new Setting(containerEl)
 			.setName("AI Provider")

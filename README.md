@@ -1,4 +1,4 @@
-# AI Explainer (Obsidian Plugin)
+# Second Brain Builder (Obsidian Plugin)
 
 Generate detailed, linked explanation notes from any selection in your vault, powered by an AI CLI (Claude Code, Gemini, or Codex) or a fully local Ollama model. Select text, pick a teaching style, and get a new note wired into your knowledge graph. Desktop only. Works on Windows, macOS, and Linux.
 
@@ -23,7 +23,7 @@ Five steps from zero to your first generated note. Each step links to a detailed
    - macOS / Linux: run `./install.sh`
 
    The script builds the plugin and finds your vaults automatically. See [Installation](#installation) for the manual route.
-4. **Enable it in Obsidian:** Settings → Community plugins → turn off Restricted mode → refresh → toggle **AI Explainer** on. If you chose Ollama in step 2, also open Settings → AI Explainer and set the provider to Ollama.
+4. **Enable it in Obsidian:** Settings → Community plugins → turn off Restricted mode → refresh → toggle **Second Brain Builder** on. If you chose Ollama in step 2, also open Settings → Second Brain Builder and set the provider to Ollama.
 5. **Generate your first note:** open any note, select a word or phrase, press `Ctrl+P` (macOS: `Cmd+P`), run **"Explain selection with AI"**, and pick the **Explain** mode. A new linked note appears in the same folder.
 
 If the plugin says it cannot find the CLI, see [Troubleshooting](#troubleshooting); it is almost always a PATH issue with a one-line fix.
@@ -101,7 +101,7 @@ All generation runs through a sequential background queue, so you can queue seve
 
 ## Setting Up an AI Backend
 
-Pick one provider in **Settings → AI Explainer → AI provider**. All four work on Windows, macOS, and Linux.
+Pick one provider in **Settings → Second Brain Builder → AI provider**. All four work on Windows, macOS, and Linux.
 
 ### Claude Code CLI (default)
 
@@ -164,14 +164,14 @@ Then copy `main.js`, `manifest.json`, and `styles.css` into your vault:
 
 | OS | Typical destination |
 |---|---|
-| Windows | `C:\Users\<you>\Documents\MyVault\.obsidian\plugins\ai-explainer\` |
-| macOS | `~/Documents/MyVault/.obsidian/plugins/ai-explainer/` |
-| Linux | `~/Documents/MyVault/.obsidian/plugins/ai-explainer/` |
+| Windows | `C:\Users\<you>\Documents\MyVault\.obsidian\plugins\second-brain-builder\` |
+| macOS | `~/Documents/MyVault/.obsidian/plugins/second-brain-builder/` |
+| Linux | `~/Documents/MyVault/.obsidian/plugins/second-brain-builder/` |
 
 ### Enable the plugin
 
 1. Open **Settings → Community plugins** and turn off Restricted mode if needed.
-2. Refresh installed plugins and toggle **AI Explainer** on.
+2. Refresh installed plugins and toggle **Second Brain Builder** on.
 3. Recommended: assign a hotkey to "Explain selection with AI" under **Settings → Hotkeys**.
 
 ## Note Modes

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # =============================================================
-# AI Explainer — Obsidian Plugin Installer (macOS / Linux)
+# Second Brain Builder — Obsidian Plugin Installer (macOS / Linux)
 # =============================================================
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -43,7 +43,7 @@ install_vault() {
         return
     fi
 
-    local DEST="$VAULT/.obsidian/plugins/ai-explainer"
+    local DEST="$VAULT/.obsidian/plugins/second-brain-builder"
     mkdir -p "$DEST"
 
     cp "$SCRIPT_DIR/main.js"       "$DEST/main.js"

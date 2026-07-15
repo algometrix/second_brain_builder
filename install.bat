@@ -2,7 +2,7 @@
 setlocal enabledelayedexpansion
 
 :: ============================================================
-:: AI Explainer — Obsidian Plugin Installer (Windows)
+:: Second Brain Builder — Obsidian Plugin Installer (Windows)
 :: ============================================================
 
 set "SCRIPT_DIR=%~dp0"
@@ -89,7 +89,7 @@ exit /b 0
 
 :install_vault
 set "V=%~1"
-set "DEST=%V%\.obsidian\plugins\ai-explainer"
+set "DEST=%V%\.obsidian\plugins\second-brain-builder"
 
 if not exist "%V%\.obsidian" (
     echo   SKIP: %V% — .obsidian folder missing

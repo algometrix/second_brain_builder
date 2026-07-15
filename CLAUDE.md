@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-An Obsidian plugin ("AI Explainer") that generates detailed explanation notes using Claude Code CLI, Gemini CLI, Codex CLI, or a local Ollama server. Users select text in a note, pick a teaching style (mode), and the plugin spawns the CLI to produce a new note or inline enhancement. Desktop only; supports Windows, macOS, and Linux.
+An Obsidian plugin ("Second Brain Builder") that generates detailed explanation notes using Claude Code CLI, Gemini CLI, Codex CLI, or a local Ollama server. Users select text in a note, pick a teaching style (mode), and the plugin spawns the CLI to produce a new note or inline enhancement. Desktop only; supports Windows, macOS, and Linux.
 
 ## Build Commands
 
@@ -25,7 +25,7 @@ This is a single-file plugin. All source code lives in `main.ts` (~3800 lines). 
 - **modes.sample.json** -- committed sample set of general-purpose modes (Explain, Deep Inquiry, Feynman, etc.); the default build input for fresh clones
 - **modes.config.json** -- optional, gitignored; `{ "modesFile": "<path>" }` points the build at a personal modes file (conventionally `modes.personal.json`, also gitignored)
 - **styles.css** -- modal and queue UI styles
-- **manifest.json** -- Obsidian plugin manifest (id: `ai-explainer`)
+- **manifest.json** -- Obsidian plugin manifest (id: `second-brain-builder`)
 - **scripts/** -- build helpers and vault fix scripts:
   - **sync-modes.js** -- prepares `modes.json` before builds (see above); wired into `npm run build` and `npm run dev`
   - **vault-root.js** -- shared vault path resolution for the fix scripts (first non-flag CLI argument, or `OBSIDIAN_VAULT` env var)
