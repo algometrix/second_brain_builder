@@ -60,7 +60,7 @@ All fix scripts share the same interface: `node scripts/<script> <vault-path>` f
 
 ### AI Provider Abstraction
 
-Supports four backends via `settings.aiProvider`: `"claude"` (Claude Code CLI, default), `"gemini"` (Gemini CLI), `"codex"` (OpenAI Codex CLI), and `"ollama"` (local Ollama REST API). The `runClaude()` method branches on provider: Claude, Gemini, and Codex spawn CLI processes, while Ollama calls the HTTP streaming API (`/api/generate`) directly via `fetch`. Claude uses `--disallowedTools` to prevent file writes; Gemini uses `--approval-mode plan`; Codex uses `codex exec --sandbox read-only` with the final message captured via `--output-last-message` (its stdout interleaves progress logs).
+Supports four backends via `settings.aiProvider`: `"claude"` (Claude Code CLI, default), `"gemini"` (Gemini CLI), `"codex"` (OpenAI Codex CLI), and `"ollama"` (local Ollama REST API). The `runClaude()` method branches on provider: Claude, Gemini, and Codex spawn CLI processes, while Ollama calls `/api/generate` via Obsidian's `requestUrl` (non-streaming; `requestUrl` cannot stream, so the live-output preview fills only for CLI providers). Claude uses `--disallowedTools` to prevent file writes; Gemini uses `--approval-mode plan`; Codex uses `codex exec --sandbox read-only` with the final message captured via `--output-last-message` written inside the plugin config folder and read back through the vault adapter (its stdout interleaves progress logs; no direct `fs` usage).
 
 ### Key Classes
 

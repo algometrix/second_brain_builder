@@ -1,8 +1,5 @@
-import { Editor, EditorPosition, MarkdownView, Menu, MenuItem, Modal, Notice, Plugin, PluginSettingTab, App, Setting, TFile, TFolder, normalizePath, setIcon } from "obsidian";
+import { Editor, EditorPosition, MarkdownView, FileSystemAdapter, Menu, MenuItem, Modal, Notice, Plugin, PluginSettingTab, App, Setting, TFile, TFolder, normalizePath, requestUrl, RequestUrlResponse, setIcon } from "obsidian";
 import { spawn } from "child_process";
-import { readFileSync, unlinkSync } from "fs";
-import { tmpdir } from "os";
-import { join } from "path";
 import BUILTIN_MODES from "./modes.json";
 
 interface NoteMode {
@@ -393,6 +390,7 @@ interface ClaudeExplainerSettings {
 	codexModel: string;
 	ollamaUrl: string;
 	ollamaModel: string;
+	setupNoticeShown: boolean;
 }
 
 const DEFAULT_SETTINGS: ClaudeExplainerSettings = {
@@ -409,6 +407,7 @@ const DEFAULT_SETTINGS: ClaudeExplainerSettings = {
 	codexModel: "",
 	ollamaUrl: "http://localhost:11434",
 	ollamaModel: "llama3",
+	setupNoticeShown: false,
 };
 
 const LOG_PREFIX = "[Second Brain Builder]";
@@ -2343,6 +2342,8 @@ export default class ClaudeExplainerPlugin extends Plugin {
 		this.statusBarEl = this.addStatusBarItem();
 		this.updateStatusBar();
 
+		this.showFirstRunNotice();
+
 		// ── Note creation command (multi-mode) ──
 		this.addCommand({
 			id: "explain-selection",
@@ -2855,6 +2856,28 @@ export default class ClaudeExplainerPlugin extends Plugin {
 			const ai = PROVIDER_LABELS[this.settings.aiProvider];
 			this.statusBarEl.setText(`${ai}: ${this.queue.length} in queue`);
 		}
+	}
+
+	private showFirstRunNotice() {
+		if (this.settings.setupNoticeShown) return;
+		this.settings.setupNoticeShown = true;
+		void this.saveSettings();
+		const notice = new Notice(
+			"Second Brain Builder needs an AI backend before first use: the Claude Code CLI (default) or a free local Ollama server. Click here to open settings and follow the setup guide.",
+			0
+		);
+		notice.noticeEl.addEventListener("click", () => {
+			notice.hide();
+			this.openSettingsTab();
+		});
+	}
+
+	private openSettingsTab() {
+		const appWithSettings = this.app as App & {
+			setting: { open(): void; openTabById(id: string): void };
+		};
+		appWithSettings.setting.open();
+		appWithSettings.setting.openTabById(this.manifest.id);
 	}
 
 	private buildLinkReplacement(
@@ -3958,7 +3981,7 @@ Rules:
 			let execPath: string;
 			let args: string[];
 			let stdinPayload = prompt;
-			let codexOutputFile: string | null = null;
+			let codexOutputPath: string | null = null;
 
 			if (this.settings.aiProvider === "gemini") {
 				execPath = this.settings.geminiPath;
@@ -3973,14 +3996,22 @@ Rules:
 				execPath = this.settings.codexPath;
 				// Codex has no system prompt flag in exec mode; prepend it to the stdin prompt.
 				// Its stdout interleaves progress logs with output, so the final message is
-				// captured via --output-last-message instead.
-				codexOutputFile = join(tmpdir(), `second-brain-builder-codex-${Date.now()}.md`);
+				// captured via --output-last-message, written inside the plugin's own config
+				// folder so it can be read back through the vault adapter.
+				codexOutputPath = normalizePath(
+					`${this.app.vault.configDir}/plugins/${this.manifest.id}/codex-last-message-${Date.now()}.md`
+				);
 				args = [
 					"exec",
 					"--sandbox", "read-only",
 					"--skip-git-repo-check",
-					"--output-last-message", codexOutputFile,
 				];
+				const adapter = this.app.vault.adapter;
+				if (adapter instanceof FileSystemAdapter) {
+					args.push("--output-last-message", adapter.getFullPath(codexOutputPath));
+				} else {
+					codexOutputPath = null;
+				}
 				if (this.settings.codexModel) {
 					args.push("--model", this.settings.codexModel);
 				}
@@ -4031,16 +4062,18 @@ Rules:
 						/is not recognized as an internal or external command|command not found|No such file or directory/i.test(errorDetail);
 					reject(cliMissing ? cliNotFoundError() : new Error(errorDetail.trim()));
 				} else {
-					let result = stdout.trim();
-					if (codexOutputFile) {
-						try {
-							const lastMessage = readFileSync(codexOutputFile, "utf8").trim();
-							if (lastMessage) result = lastMessage;
-						} catch { /* fall back to stdout */ }
-						try { unlinkSync(codexOutputFile); } catch { /* ignore */ }
-					}
-					logger.info(`${providerLabel} responded successfully`);
-					resolve(result);
+					void (async () => {
+						let result = stdout.trim();
+						if (codexOutputPath) {
+							try {
+								const lastMessage = (await this.app.vault.adapter.read(codexOutputPath)).trim();
+								if (lastMessage) result = lastMessage;
+							} catch { /* fall back to stdout */ }
+							try { await this.app.vault.adapter.remove(codexOutputPath); } catch { /* ignore */ }
+						}
+						logger.info(`${providerLabel} responded successfully`);
+						resolve(result);
+					})();
 				}
 			});
 
@@ -4061,65 +4094,38 @@ Rules:
 			model: this.settings.ollamaModel,
 			prompt,
 			system: systemPrompt,
-			stream: true,
+			stream: false,
 		});
 
 		logger.info(`Ollama request: ${url}, model=${this.settings.ollamaModel}, prompt=${prompt.length} chars`);
 
-		let response: Response;
+		let response: RequestUrlResponse;
 		try {
-			response = await fetch(url, {
+			response = await requestUrl({
+				url,
 				method: "POST",
-				headers: { "Content-Type": "application/json" },
+				contentType: "application/json",
 				body,
+				throw: false,
 			});
 		} catch (err) {
 			const msg = err instanceof Error ? err.message : String(err);
 			throw new Error(`Ollama connection failed: ${msg}. Is Ollama running at ${this.settings.ollamaUrl}?`);
 		}
 
-		if (!response.ok) {
-			const text = await response.text();
-			throw new Error(`Ollama error (${response.status}): ${text}`);
+		if (response.status >= 400) {
+			throw new Error(`Ollama error (${response.status}): ${response.text}`);
 		}
 
-		const reader = response.body!.getReader();
-		const decoder = new TextDecoder();
-		let output = "";
-		let buffer = "";
-
-		while (true) {
-			const { done, value } = await reader.read();
-			if (done) break;
-			buffer += decoder.decode(value, { stream: true });
-			const lines = buffer.split("\n");
-			buffer = lines.pop()!;
-			for (const line of lines) {
-				if (!line.trim()) continue;
-				try {
-					const json = JSON.parse(line) as { error?: string; response?: string };
-					if (json.error) {
-						throw new Error(`Ollama: ${json.error}`);
-					}
-					if (json.response) {
-						output += json.response;
-						this.streamData.currentOutput = output;
-					}
-				} catch (e) {
-					if (e instanceof Error && e.message.startsWith("Ollama:")) throw e;
-				}
-			}
+		const json = response.json as { error?: string; response?: string };
+		if (json.error) {
+			throw new Error(`Ollama: ${json.error}`);
 		}
 
-		if (buffer.trim()) {
-			try {
-				const json = JSON.parse(buffer) as { response?: string };
-				if (json.response) output += json.response;
-			} catch { /* ignore trailing incomplete chunk */ }
-		}
-
+		const output = (json.response ?? "").trim();
+		this.streamData.currentOutput = output;
 		logger.info(`Ollama responded successfully, ${output.length} chars`);
-		return output.trim();
+		return output;
 	}
 }
 
@@ -4131,6 +4137,27 @@ class ClaudeExplainerSettingTab extends PluginSettingTab {
 	constructor(app: App, plugin: ClaudeExplainerPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
+	}
+
+	private renderSetupGuide(containerEl: HTMLElement, heading: string, steps: { title: string; text: string }[]): void {
+		new Setting(containerEl).setName(heading).setHeading();
+		const guideEl = containerEl.createDiv({ cls: "ch-guide" });
+		for (const step of steps) {
+			const stepEl = guideEl.createDiv({ cls: "ch-guide-step" });
+			if (step.title) {
+				stepEl.createEl("strong", { cls: "ch-strong-block ch-gap-above", text: step.title });
+				stepEl.createSpan({ text: step.text });
+			} else {
+				stepEl.createEl("code", { cls: "ch-guide-code", text: step.text });
+			}
+		}
+	}
+
+	private cliTestStep(cli: string): { title: string; text: string } {
+		return {
+			title: "4. Test",
+			text: `Select text in any note and run "Explain selection with AI" from the command palette. If the plugin reports the CLI is not found, enter its full path above (find it with "where ${cli}" on Windows or "which ${cli}" on macOS/Linux).`,
+		};
 	}
 
 	display(): void {
@@ -4179,6 +4206,14 @@ class ClaudeExplainerSettingTab extends PluginSettingTab {
 							await this.plugin.saveSettings();
 						})
 				);
+
+			this.renderSetupGuide(containerEl, "Claude Code setup guide", [
+				{ title: "1. Install Node.js", text: "Download version 16 or newer from nodejs.org. Verify in a terminal with: node --version" },
+				{ title: "2. Install the Claude Code CLI", text: "In a terminal, run:" },
+				{ title: "", text: "npm install -g @anthropic-ai/claude-code" },
+				{ title: "3. Log in", text: "Run claude once in a terminal and follow the login prompts. Requires a Claude account (Pro, Max, or API billing)." },
+				this.cliTestStep("claude"),
+			]);
 		} else if (this.plugin.settings.aiProvider === "gemini") {
 			new Setting(containerEl)
 				.setName("Gemini CLI path")
@@ -4205,6 +4240,14 @@ class ClaudeExplainerSettingTab extends PluginSettingTab {
 							await this.plugin.saveSettings();
 						})
 				);
+
+			this.renderSetupGuide(containerEl, "Gemini CLI setup guide", [
+				{ title: "1. Install Node.js", text: "Download version 16 or newer from nodejs.org. Verify in a terminal with: node --version" },
+				{ title: "2. Install the Gemini CLI", text: "In a terminal, run:" },
+				{ title: "", text: "npm install -g @google/gemini-cli" },
+				{ title: "3. Log in", text: "Run gemini once in a terminal and sign in with your Google account. The free tier is enough to start." },
+				this.cliTestStep("gemini"),
+			]);
 		} else if (this.plugin.settings.aiProvider === "codex") {
 			new Setting(containerEl)
 				.setName("Codex CLI path")
@@ -4231,6 +4274,14 @@ class ClaudeExplainerSettingTab extends PluginSettingTab {
 							await this.plugin.saveSettings();
 						})
 				);
+
+			this.renderSetupGuide(containerEl, "Codex CLI setup guide", [
+				{ title: "1. Install Node.js", text: "Download version 16 or newer from nodejs.org. Verify in a terminal with: node --version" },
+				{ title: "2. Install the Codex CLI", text: "In a terminal, run:" },
+				{ title: "", text: "npm install -g @openai/codex" },
+				{ title: "3. Log in", text: "Run codex once in a terminal and sign in with your OpenAI or ChatGPT account." },
+				this.cliTestStep("codex"),
+			]);
 		} else if (this.plugin.settings.aiProvider === "ollama") {
 			new Setting(containerEl)
 				.setName("Ollama server URL")
@@ -4319,10 +4370,7 @@ class ClaudeExplainerSettingTab extends PluginSettingTab {
 			}
 
 			// Ollama setup guide
-			new Setting(containerEl).setName("Ollama setup guide").setHeading();
-			const guideEl = containerEl.createDiv({ cls: "ch-guide" });
-
-			const steps = [
+			this.renderSetupGuide(containerEl, "Ollama setup guide", [
 				{ title: "1. Install Ollama", text: "Download and install from ollama.com. Available for Windows, macOS, and Linux." },
 				{ title: "2. Start the server", text: "Open a terminal and run: ollama serve. This starts the API server on localhost:11434. Keep the terminal open while using the plugin." },
 				{ title: "3. Pull a model", text: "In a separate terminal, pull the model you want to use:" },
@@ -4330,19 +4378,7 @@ class ClaudeExplainerSettingTab extends PluginSettingTab {
 				{ title: "", text: "ollama pull gemma4:e4b" },
 				{ title: "", text: "ollama pull gpt-oss:20b" },
 				{ title: "4. Verify", text: "Run: ollama list to confirm your models are downloaded. Then select a model above and generate a note to test." },
-			];
-
-			for (const step of steps) {
-				const stepEl = guideEl.createDiv({ cls: "ch-guide-step" });
-				if (step.title) {
-					stepEl.createEl("strong", { cls: "ch-strong-block ch-gap-above", text: step.title });
-				}
-				if (step.title === "") {
-					stepEl.createEl("code", { cls: "ch-guide-code", text: step.text });
-				} else {
-					stepEl.createSpan({ text: step.text });
-				}
-			}
+			]);
 
 			// Platform-specific notes
 			new Setting(containerEl).setName("Platform notes").setHeading();

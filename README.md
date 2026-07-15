@@ -4,27 +4,25 @@ Turn any topic into a folder of interlinked, deep-dive study notes: a generated 
 
 ## Quick Start
 
-Five steps from zero to your first generated note. Each step links to a detailed section below if you get stuck.
+Four steps from zero to your first generated note. Each step links to a detailed section below if you get stuck.
 
-1. **Install Node.js** (version 16 or newer) from [nodejs.org](https://nodejs.org). Verify with `node --version` in a terminal.
-2. **Set up one AI backend.** The two easiest options:
-   - *Cloud (best quality):* `npm install -g @anthropic-ai/claude-code`, then run `claude` once to log in. Needs a Claude account.
-   - *Local (free, private):* install [Ollama](https://ollama.com) and run `ollama pull llama3`. No account needed.
+1. **Install the plugin.**
+   - *From Obsidian (recommended, once listed in the community directory):* Settings → Community plugins → Browse → search **Second Brain Builder** → Install → Enable.
+   - *From GitHub:* clone the repo and run the installer (needs [Node.js](https://nodejs.org) 16+):
 
-   All options are covered in [Setting Up an AI Backend](#setting-up-an-ai-backend).
-3. **Clone and install the plugin:**
+     ```bash
+     git clone https://github.com/algometrix/second_brain_builder.git
+     cd second_brain_builder
+     ```
 
-   ```bash
-   git clone https://github.com/algometrix/second_brain_builder.git
-   cd second_brain_builder
-   ```
+     Windows: double-click `install.bat`. macOS / Linux: run `./install.sh`. Then enable it under Settings → Community plugins. See [Installation](#installation) for the manual route.
+2. **Set up one AI backend.** The plugin generates nothing until this is done. The two easiest options:
+   - *Cloud (best quality):* install [Node.js](https://nodejs.org) 16+, then `npm install -g @anthropic-ai/claude-code`, then run `claude` once to log in. Needs a Claude account.
+   - *Local (free, private):* install [Ollama](https://ollama.com) and run `ollama pull llama3`. No account or Node.js needed.
 
-   - Windows: double-click `install.bat` (or run it in a terminal)
-   - macOS / Linux: run `./install.sh`
-
-   The script builds the plugin and finds your vaults automatically. See [Installation](#installation) for the manual route.
-4. **Enable it in Obsidian:** Settings → Community plugins → turn off Restricted mode → refresh → toggle **Second Brain Builder** on. If you chose Ollama in step 2, also open Settings → Second Brain Builder and set the provider to Ollama.
-5. **Generate your first note:** open any note, select a word or phrase, press `Ctrl+P` (macOS: `Cmd+P`), run **"Explain selection with AI"**, and pick the **Explain** mode. A new linked note appears in the same folder. Then try the headline feature: run **"Generate knowledge notes in folder with AI"**, type any topic, and watch it build a whole linked series with an index and diagrams.
+   All options are covered in [Setting Up an AI Backend](#setting-up-an-ai-backend), and the plugin's settings tab shows the same steps for whichever provider you select.
+3. **Pick your provider:** open Settings → Second Brain Builder and set **AI provider** to the backend you set up (Claude is the default). The setup guide for that provider appears right below the option.
+4. **Generate your first note:** open any note, select a word or phrase, press `Ctrl+P` (macOS: `Cmd+P`), run **"Explain selection with AI"**, and pick the **Explain** mode. A new linked note appears in the same folder. Then try the headline feature: run **"Generate knowledge notes in folder with AI"**, type any topic, and watch it build a whole linked series with an index and diagrams.
 
 If the plugin says it cannot find the CLI, see [Troubleshooting](#troubleshooting); it is almost always a PATH issue with a one-line fix.
 
@@ -98,14 +96,14 @@ Use these if you keep system design or interview prep notes.
 All generation runs through a sequential background queue, so you can queue several notes and keep working.
 
 - The **status bar** shows the current item and queue length.
-- **"View note generation queue"** opens a live progress modal with streaming output, elapsed time, retry, and remove.
+- **"View note generation queue"** opens a live progress modal with elapsed time, retry, remove, and streaming output (CLI providers; Ollama output appears when generation completes).
 - **"View logs"** shows recent plugin activity for debugging.
 
 ## Requirements
 
 - Obsidian on desktop (Windows, macOS, or Linux). The plugin is desktop only because it spawns local processes.
-- Node.js 16+ and npm, to build the plugin.
-- At least one AI backend from the next section.
+- At least one AI backend from the next section. Installing the plugin is not enough by itself; nothing generates until a backend is set up.
+- Node.js 16+ and npm, but only if you use a CLI backend (Claude, Gemini, Codex) or install the plugin from GitHub. Ollama users installing from the community directory do not need Node.
 
 ## Setting Up an AI Backend
 
@@ -154,14 +152,26 @@ Use Ollama when your notes must never leave your machine or you do not want a su
 
 ## Installation
 
-### Option A: Installer script
+### Option A: From Obsidian (recommended)
+
+Once the plugin is available in the community directory:
+
+1. Open **Settings → Community plugins → Browse**.
+2. Search for **Second Brain Builder**, click **Install**, then **Enable**.
+3. Open **Settings → Second Brain Builder** and follow the setup guide for your chosen AI backend (see [Setting Up an AI Backend](#setting-up-an-ai-backend)).
+
+No terminal or Node.js is needed for this route unless you pick a CLI backend.
+
+### Option B: From GitHub (installer script)
+
+Clone the repo, then:
 
 - **Windows:** run `install.bat`
 - **macOS / Linux:** run `./install.sh`
 
-Both build the plugin and auto-detect your vaults from Obsidian's config, with a manual path prompt as fallback.
+Both build the plugin and auto-detect your vaults from Obsidian's config, with a manual path prompt as fallback. Requires Node.js 16+.
 
-### Option B: Manual
+### Option C: From GitHub (manual)
 
 ```bash
 npm install
