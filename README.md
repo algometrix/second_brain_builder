@@ -1,6 +1,6 @@
 # Second Brain Builder (Obsidian Plugin)
 
-Generate detailed, linked explanation notes from any selection in your vault, powered by an AI CLI (Claude Code, Gemini, or Codex) or a fully local Ollama model. Select text, pick a teaching style, and get a new note wired into your knowledge graph. Desktop only. Works on Windows, macOS, and Linux.
+Turn any topic into a folder of interlinked, deep-dive study notes: a generated index hub, mermaid concept maps, and wiki-links that light up Obsidian's graph view. Powered by an AI CLI (Claude Code, Gemini, or Codex) or a fully local Ollama model. It also explains selections into linked notes and enhances text in place. Desktop only. Works on Windows, macOS, and Linux.
 
 ## Quick Start
 
@@ -24,11 +24,25 @@ Five steps from zero to your first generated note. Each step links to a detailed
 
    The script builds the plugin and finds your vaults automatically. See [Installation](#installation) for the manual route.
 4. **Enable it in Obsidian:** Settings → Community plugins → turn off Restricted mode → refresh → toggle **Second Brain Builder** on. If you chose Ollama in step 2, also open Settings → Second Brain Builder and set the provider to Ollama.
-5. **Generate your first note:** open any note, select a word or phrase, press `Ctrl+P` (macOS: `Cmd+P`), run **"Explain selection with AI"**, and pick the **Explain** mode. A new linked note appears in the same folder.
+5. **Generate your first note:** open any note, select a word or phrase, press `Ctrl+P` (macOS: `Cmd+P`), run **"Explain selection with AI"**, and pick the **Explain** mode. A new linked note appears in the same folder. Then try the headline feature: run **"Generate knowledge notes in folder with AI"**, type any topic, and watch it build a whole linked series with an index and diagrams.
 
 If the plugin says it cannot find the CLI, see [Troubleshooting](#troubleshooting); it is almost always a PATH issue with a one-line fix.
 
 ## Features and When to Use Them
+
+### Generate Knowledge Notes in Folder (the headline feature)
+
+Give the plugin a topic, a pasted paragraph, or a whole article, pick a teaching mode and a target folder, and it builds a complete, interlinked mini-textbook. Run it from the command palette (**"Generate knowledge notes in folder with AI"**) or by right-clicking a folder.
+
+Here is what happens under the hood:
+
+1. **Planning.** The AI acts as a curriculum designer and decomposes your scenario into 8 to 15 self-contained concept notes, ordered from foundational to advanced. Each planned note gets a title, a defined scope, and a list of related notes in the series. Modes can carry a `folderDecompositionGuide` that teaches the planner how to split topics in that domain, so the breakdown is not generic.
+2. **Index hub.** A hub note named after the folder is generated first. It contains an overview of the topic, every note in the series as a `[[wiki-link]]` grouped logically with one-line descriptions, a recommended reading order with rationale, and a **mermaid diagram** (with subgraphs) mapping how the notes relate to each other.
+3. **The notes themselves.** Each note is then written in your chosen mode's style, one queue item at a time. Every note knows its siblings: it receives the full series plan and its own scope, and is instructed to cross-link related notes with `[[wiki-links]]` where relevant. Notes use mermaid diagrams, tables, and Obsidian callouts throughout, and every one gets YAML frontmatter and consistent formatting via the plugin's output rules.
+4. **The graph effect.** Because the hub links to every note and the notes link to each other, the folder appears in Obsidian's graph view as a connected cluster around the hub, not a pile of orphan files.
+5. **Safe to re-run.** Existing notes with content are skipped and empty stubs are filled in, so you can re-run the command on the same folder to resume an interrupted batch or extend the series.
+
+Use this when you want to learn a new subject properly: one command turns "explain Kubernetes networking to me" or a pasted job description into a structured, linked course you can read in order or explore through the graph.
 
 ### Explain Selection (note creation)
 
@@ -71,12 +85,6 @@ Use this to bootstrap a new subject from nothing.
 **"Fill empty note with AI"** fills the note you are in, using its title and backlink context as the prompt.
 
 Use this when you created stub `[[links]]` earlier and want to flesh them out one by one.
-
-### Generate Knowledge Notes in Folder
-
-**"Generate knowledge notes in folder with AI"** analyzes a folder and batch-generates a set of notes for it.
-
-Use this to build out a whole topic area in one pass.
 
 ### System Design Utilities
 
