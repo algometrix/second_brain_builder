@@ -15,8 +15,8 @@ Five steps from zero to your first generated note. Each step links to a detailed
 3. **Clone and install the plugin:**
 
    ```bash
-   git clone https://github.com/algometrix/ai_explainer.git
-   cd ai_explainer
+   git clone https://github.com/algometrix/second_brain_builder.git
+   cd second_brain_builder
    ```
 
    - Windows: double-click `install.bat` (or run it in a terminal)
