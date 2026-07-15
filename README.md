@@ -60,7 +60,7 @@ Here is what happens under the hood:
 4. **The graph effect.** Because the hub links to every note and the notes link to each other, the folder appears in Obsidian's graph view as a connected cluster around the hub, not a pile of orphan files.
 5. **Safe to re-run.** Existing notes with content are skipped and empty stubs are filled in, so you can re-run the command on the same folder to resume an interrupted batch or extend the series.
 
-Use this when you want to learn a new subject properly: one command turns "explain Kubernetes networking to me" or a pasted job description into a structured, linked course you can read in order or explore through the graph.
+Use this when you want to learn a new subject properly: one command turns "explain how the global oil market works" or a pasted article into a structured, linked course you can read in order or explore through the graph.
 
 ### Explain Selection (note creation)
 
