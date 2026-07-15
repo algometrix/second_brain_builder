@@ -1,4 +1,4 @@
-import { Editor, EditorPosition, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, App, Setting, TFile, TFolder, normalizePath, Menu, setIcon } from "obsidian";
+import { Editor, EditorPosition, MarkdownView, Menu, MenuItem, Modal, Notice, Plugin, PluginSettingTab, App, Setting, TFile, TFolder, normalizePath, setIcon } from "obsidian";
 import { spawn } from "child_process";
 import { readFileSync, unlinkSync } from "fs";
 import { tmpdir } from "os";
@@ -424,7 +424,7 @@ class Logger {
 		if (!this.enabled) return;
 		const entry = `${this.timestamp()} INFO  ${msg}`;
 		this.lines.push(entry);
-		console.log(LOG_PREFIX, msg, ...data);
+		console.debug(LOG_PREFIX, msg, ...data);
 		this.trim();
 	}
 
@@ -486,8 +486,6 @@ function sanitizeFilename(name: string): string {
 	);
 }
 
-const MODAL_STYLES_ID = "claude-helper-modal-styles";
-
 function setModalTitle(modal: Modal, title: string): void {
 	if (typeof modal.setTitle === "function") {
 		modal.setTitle(title);
@@ -495,52 +493,6 @@ function setModalTitle(modal: Modal, title: string): void {
 	if (modal.titleEl) {
 		modal.titleEl.innerText = title;
 	}
-}
-
-function ensureModalStyles(): void {
-	if (document.getElementById(MODAL_STYLES_ID)) return;
-	const style = document.createElement("style");
-	style.id = MODAL_STYLES_ID;
-	style.textContent = `
-		.ch-modal { max-width: 620px; }
-		.ch-modal .modal-content { padding: 16px 20px; }
-		.ch-modal .modal-title { font-size: 18px; font-weight: 600; }
-		.ch-label { font-weight: 600; font-size: 13px; margin-bottom: 6px; }
-		.ch-hint { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; }
-		.ch-search { width: 100%; margin-bottom: 8px; }
-		.ch-grid {
-			display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
-			margin-bottom: 14px; max-height: 260px; overflow-y: auto;
-			padding-right: 4px;
-		}
-		.ch-card {
-			display: flex; align-items: flex-start; gap: 10px;
-			padding: 8px 12px; border: 1px solid var(--background-modifier-border);
-			border-radius: 8px; cursor: pointer; transition: all 0.15s ease;
-		}
-		.ch-card:hover {
-			background-color: var(--background-modifier-hover);
-			border-color: var(--interactive-accent);
-		}
-		.ch-card.is-selected {
-			background-color: var(--interactive-accent);
-			border-color: var(--interactive-accent);
-			color: var(--text-on-accent);
-		}
-		.ch-card.is-selected .ch-card-desc { color: var(--text-on-accent); opacity: 0.85; }
-		.ch-card-icon { flex-shrink: 0; width: 18px; height: 18px; margin-top: 2px; opacity: 0.7; }
-		.ch-card.is-selected .ch-card-icon { opacity: 1; }
-		.ch-card-body { min-width: 0; }
-		.ch-card-name { font-weight: 600; font-size: 13px; line-height: 1.3; }
-		.ch-card-desc { font-size: 11px; color: var(--text-muted); line-height: 1.3; margin-top: 1px; }
-		.ch-sep { border-top: 1px solid var(--background-modifier-border); padding-top: 12px; margin-top: 4px; }
-		.ch-input { width: 100%; margin-bottom: 12px; }
-		.ch-textarea { width: 100%; min-height: 50px; margin-bottom: 12px; }
-		.ch-btn-row { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
-		.ch-format-row { display: flex; gap: 8px; margin-bottom: 10px; }
-		.ch-empty { padding: 16px; text-align: center; color: var(--text-muted); font-size: 13px; grid-column: 1 / -1; }
-	`;
-	document.head.appendChild(style);
 }
 
 function renderModeCard(container: HTMLElement, mode: NoteMode): HTMLElement {
@@ -574,7 +526,7 @@ function createModeGrid(
 		for (const c of cards) {
 			const mode = modes.find(m => m.id === c.id)!;
 			const match = !q || mode.name.toLowerCase().includes(q) || mode.description.toLowerCase().includes(q);
-			c.el.style.display = match ? "" : "none";
+			c.el.toggleClass("ch-hidden", !match);
 		}
 	});
 
@@ -640,7 +592,7 @@ function fixMermaidBlocks(content: string): string {
 		});
 		// Quote unquoted node labels containing special chars that mermaid misparses
 		// e.g. A[System (Restart/Scale)] → A["System (Restart/Scale)"]
-		fixed = fixed.replace(/\[([^\]"]*[()\/\\][^\]"]*)\]/g, '["$1"]');
+		fixed = fixed.replace(/\[([^\]"]*[()/\\][^\]"]*)\]/g, '["$1"]');
 		fixed = fixed.replace(/\(([^)"]*[()][^)"]*)\)/g, '("$1")');
 		if (!fixed.endsWith("\n")) fixed += "\n";
 		return "```mermaid\n" + fixed + "```";
@@ -759,11 +711,10 @@ class NoteCreatorModal extends Modal {
 	}
 
 	onOpen(): void {
-		ensureModalStyles();
 		const el = this.contentEl;
 		el.empty();
 		this.modalEl.addClass("ch-modal");
-		setModalTitle(this, "Create Note");
+		setModalTitle(this, "Create note");
 
 		const wrapper = el.createDiv();
 
@@ -938,7 +889,6 @@ class InlineActionModal extends Modal {
 	}
 
 	onOpen(): void {
-		ensureModalStyles();
 		const el = this.contentEl;
 		el.empty();
 		this.modalEl.addClass("ch-modal");
@@ -950,12 +900,11 @@ class InlineActionModal extends Modal {
 
 		if (!this.preselectedAction) {
 			wrapper.createDiv({ cls: "ch-label", text: "Action" });
-			const grid = wrapper.createDiv({ cls: "ch-grid" });
-			grid.style.gridTemplateColumns = "1fr 1fr 1fr";
+			const grid = wrapper.createDiv({ cls: "ch-grid ch-grid-3col" });
 
 			this.btnEls = [];
 			for (const action of this.actions) {
-				const card = renderModeCard(grid, action as NoteMode);
+				const card = renderModeCard(grid, action);
 				this.btnEls.push({ id: action.id, el: card });
 				card.addEventListener("click", () => this.pickAction(action));
 			}
@@ -1059,7 +1008,6 @@ class FullNoteActionModal extends Modal {
 	}
 
 	onOpen(): void {
-		ensureModalStyles();
 		const el = this.contentEl;
 		el.empty();
 		this.modalEl.addClass("ch-modal");
@@ -1158,7 +1106,6 @@ class FillNoteModal extends Modal {
 	}
 
 	onOpen(): void {
-		ensureModalStyles();
 		const el = this.contentEl;
 		el.empty();
 		this.modalEl.addClass("ch-modal");
@@ -1167,8 +1114,7 @@ class FillNoteModal extends Modal {
 		const wrapper = el.createDiv();
 
 		if (this.backlinkSources.length > 0) {
-			const blInfo = wrapper.createDiv();
-			blInfo.style.cssText = "padding: 8px 12px; background: var(--background-secondary); border-radius: 6px; margin-bottom: 12px;";
+			const blInfo = wrapper.createDiv({ cls: "ch-backlink-info" });
 			blInfo.createDiv({ cls: "ch-label", text: `Context from ${this.backlinkSources.length} backlink${this.backlinkSources.length > 1 ? "s" : ""}:` });
 			for (const src of this.backlinkSources) {
 				blInfo.createDiv({ cls: "ch-hint", text: "  " + src });
@@ -1178,10 +1124,9 @@ class FillNoteModal extends Modal {
 		}
 
 		wrapper.createDiv({ cls: "ch-label", text: this.backlinkSources.length > 0 ? "Context (from backlinks, editable)" : "Context (describe what this note should cover)" });
-		const ctxInput = wrapper.createEl("textarea", { cls: "ch-textarea" });
+		const ctxInput = wrapper.createEl("textarea", { cls: "ch-textarea ch-textarea-sm" });
 		ctxInput.value = this.contextValue;
 		ctxInput.placeholder = "e.g. This note should explain how binary search works, with examples in Python...";
-		ctxInput.style.minHeight = "80px";
 		ctxInput.rows = 4;
 		ctxInput.addEventListener("input", () => { this.contextValue = ctxInput.value; });
 
@@ -1271,11 +1216,10 @@ class TopicGeneratorModal extends Modal {
 	}
 
 	onOpen(): void {
-		ensureModalStyles();
 		const el = this.contentEl;
 		el.empty();
 		this.modalEl.addClass("ch-modal");
-		setModalTitle(this, "Generate Notes from Topic");
+		setModalTitle(this, "Generate notes from topic");
 
 		const wrapper = el.createDiv();
 		wrapper.createDiv({ cls: "ch-hint", text: "Location: " + (this.folderPath || "/") });
@@ -1408,21 +1352,18 @@ class FolderGeneratorModal extends Modal {
 	}
 
 	onOpen(): void {
-		ensureModalStyles();
 		const el = this.contentEl;
 		el.empty();
-		this.modalEl.addClass("ch-modal");
-		this.modalEl.style.maxWidth = "720px";
-		setModalTitle(this, "Generate Knowledge Notes");
+		this.modalEl.addClass("ch-modal", "ch-modal-wide");
+		setModalTitle(this, "Generate knowledge notes");
 
 		const wrapper = el.createDiv();
 		wrapper.createDiv({ cls: "ch-hint", text: `Target folder: ${this.folderPath || "/"}` });
 
 		wrapper.createDiv({ cls: "ch-label", text: "Scenario / Prompt" });
-		const scenarioInput = wrapper.createEl("textarea", { cls: "ch-textarea" });
+		const scenarioInput = wrapper.createEl("textarea", { cls: "ch-textarea ch-textarea-lg" });
 		scenarioInput.placeholder = "e.g. Design a website that shows the current time, needs auth, available globally, never goes down...\n\nOr: Explain the SOLID principles with real-world examples...\n\nOr: Cover the sliding window pattern for arrays and strings...";
 		scenarioInput.rows = 5;
-		scenarioInput.style.minHeight = "120px";
 		scenarioInput.addEventListener("input", () => { this.scenarioValue = scenarioInput.value; this.updateSubmitButton(); });
 		scenarioInput.addEventListener("keydown", (e) => {
 			e.stopPropagation();
@@ -1523,12 +1464,10 @@ class FolderAnalysisModal extends Modal {
 	}
 
 	onOpen(): void {
-		ensureModalStyles();
 		const el = this.contentEl;
 		el.empty();
-		this.modalEl.addClass("ch-modal");
-		this.modalEl.style.maxWidth = "720px";
-		setModalTitle(this, "Analyze Folder");
+		this.modalEl.addClass("ch-modal", "ch-modal-wide");
+		setModalTitle(this, "Analyze folder");
 
 		const wrapper = el.createDiv();
 		wrapper.createDiv({ cls: "ch-hint", text: `Analyzing: ${this.folderPath || "/"}` });
@@ -1541,10 +1480,9 @@ class FolderAnalysisModal extends Modal {
 
 		const sep = wrapper.createDiv({ cls: "ch-sep" });
 		sep.createDiv({ cls: "ch-label", text: "Additional content (articles, context, instructions)" });
-		const extraInput = sep.createEl("textarea", { cls: "ch-textarea" });
+		const extraInput = sep.createEl("textarea", { cls: "ch-textarea ch-textarea-xl" });
 		extraInput.placeholder = "Paste articles, blog posts, or extra context here...\n\nFor Design Hole Finder: optional, leave empty to analyze existing notes.\nFor Enrich from Articles: paste the source material here.";
 		extraInput.rows = 8;
-		extraInput.style.minHeight = "160px";
 		extraInput.addEventListener("input", () => { this.extraValue = extraInput.value; });
 		extraInput.addEventListener("keydown", (e) => {
 			e.stopPropagation();
@@ -1616,12 +1554,10 @@ class AddTopicModal extends Modal {
 	}
 
 	onOpen(): void {
-		ensureModalStyles();
 		const el = this.contentEl;
 		el.empty();
-		this.modalEl.addClass("ch-modal");
-		this.modalEl.style.maxWidth = "720px";
-		setModalTitle(this, "Add Topic to Folder");
+		this.modalEl.addClass("ch-modal", "ch-modal-wide");
+		setModalTitle(this, "Add topic to folder");
 
 		const wrapper = el.createDiv();
 		wrapper.createDiv({ cls: "ch-hint", text: `Folder: ${this.folderPath || "/"}` });
@@ -1734,33 +1670,25 @@ class ExpandFolderModal extends Modal {
 	}
 
 	onOpen(): void {
-		ensureModalStyles();
 		const el = this.contentEl;
 		el.empty();
-		this.modalEl.addClass("ch-modal");
-		this.modalEl.style.maxWidth = "720px";
-		setModalTitle(this, "Expand Folder with More Notes");
+		this.modalEl.addClass("ch-modal", "ch-modal-wide");
+		setModalTitle(this, "Expand folder with more notes");
 
 		const wrapper = el.createDiv();
 		wrapper.createDiv({ cls: "ch-hint", text: `Folder: ${this.folderPath || "/"}` });
 		wrapper.createDiv({ cls: "ch-hint", text: `${this.existingNotes.length} existing notes will be read as context. New notes will not repeat existing content.` });
 
 		if (this.existingNotes.length > 0) {
-			const existingEl = wrapper.createDiv();
-			existingEl.style.fontSize = "12px";
-			existingEl.style.color = "var(--text-muted)";
-			existingEl.style.marginBottom = "8px";
-			existingEl.style.maxHeight = "80px";
-			existingEl.style.overflowY = "auto";
+			const existingEl = wrapper.createDiv({ cls: "ch-existing-list" });
 			existingEl.createEl("strong", { text: "Existing: " });
 			existingEl.createSpan({ text: this.existingNotes.join(", ") });
 		}
 
 		wrapper.createDiv({ cls: "ch-label", text: "What to add" });
-		const dirInput = wrapper.createEl("textarea", { cls: "ch-textarea" });
+		const dirInput = wrapper.createEl("textarea", { cls: "ch-textarea ch-textarea-md" });
 		dirInput.placeholder = "e.g. Add notes covering concurrency patterns, thread safety, and lock-free data structures\n\nOr: Expand with real-world case studies and failure post-mortems\n\nOr: Add notes on the networking and security aspects I haven't covered yet";
 		dirInput.rows = 4;
-		dirInput.style.minHeight = "100px";
 		dirInput.addEventListener("input", () => { this.directionValue = dirInput.value; this.updateSubmitButton(); });
 		dirInput.addEventListener("keydown", (e) => {
 			e.stopPropagation();
@@ -1857,12 +1785,10 @@ class NoteAnalysisModal extends Modal {
 	}
 
 	onOpen(): void {
-		ensureModalStyles();
 		const el = this.contentEl;
 		el.empty();
-		this.modalEl.addClass("ch-modal");
-		this.modalEl.style.maxWidth = "720px";
-		setModalTitle(this, "Analyze Note");
+		this.modalEl.addClass("ch-modal", "ch-modal-wide");
+		setModalTitle(this, "Analyze note");
 
 		const wrapper = el.createDiv();
 		wrapper.createDiv({ cls: "ch-hint", text: `Analyzing: ${this.file.basename}` });
@@ -1874,10 +1800,9 @@ class NoteAnalysisModal extends Modal {
 
 		const sep = wrapper.createDiv({ cls: "ch-sep" });
 		sep.createDiv({ cls: "ch-label", text: "Additional content (articles, context, instructions)" });
-		const extraInput = sep.createEl("textarea", { cls: "ch-textarea" });
+		const extraInput = sep.createEl("textarea", { cls: "ch-textarea ch-textarea-xl" });
 		extraInput.placeholder = "Paste articles, blog posts, or extra context here...\n\nFor Design Hole Finder: optional, leave empty to analyze the note as-is.\nFor Enrich from Articles: paste the source material here.";
 		extraInput.rows = 8;
-		extraInput.style.minHeight = "160px";
 		extraInput.addEventListener("input", () => { this.extraValue = extraInput.value; });
 		extraInput.addEventListener("keydown", (e) => {
 			e.stopPropagation();
@@ -1941,60 +1866,33 @@ class QueueStatusModal extends Modal {
 	buildLayout(): void {
 		const el = this.contentEl;
 		el.empty();
-		setModalTitle(this, "Generation Queue");
+		setModalTitle(this, "Generation queue");
 
-		const wrapper = el.createDiv();
-		wrapper.style.padding = "8px";
-		wrapper.style.minWidth = "500px";
+		const wrapper = el.createDiv({ cls: "ch-queue-wrapper" });
 
-		this.headerEl = wrapper.createDiv();
-		this.headerEl.style.marginBottom = "12px";
+		this.headerEl = wrapper.createDiv({ cls: "ch-queue-header" });
 
-		this.timerEl = wrapper.createDiv();
-		this.timerEl.style.fontSize = "12px";
-		this.timerEl.style.color = "var(--text-muted)";
-		this.timerEl.style.marginBottom = "8px";
+		this.timerEl = wrapper.createDiv({ cls: "ch-queue-timer" });
 
-		const previewLabel = wrapper.createDiv();
-		previewLabel.setText("Live output");
-		previewLabel.style.fontWeight = "600";
-		previewLabel.style.fontSize = "13px";
-		previewLabel.style.marginBottom = "4px";
+		wrapper.createDiv({ cls: "ch-section-label", text: "Live output" });
 
-		this.previewEl = wrapper.createEl("pre");
-		this.previewEl.style.maxHeight = "300px";
-		this.previewEl.style.overflowY = "auto";
-		this.previewEl.style.padding = "10px";
-		this.previewEl.style.fontSize = "12px";
-		this.previewEl.style.border = "1px solid var(--background-modifier-border)";
-		this.previewEl.style.borderRadius = "6px";
-		this.previewEl.style.backgroundColor = "var(--background-secondary)";
-		this.previewEl.style.whiteSpace = "pre-wrap";
-		this.previewEl.style.wordBreak = "break-word";
-		this.previewEl.style.marginBottom = "12px";
+		this.previewEl = wrapper.createEl("pre", { cls: "ch-queue-preview" });
 
-		this.queueListEl = wrapper.createDiv();
-		this.queueListEl.style.marginBottom = "8px";
+		this.queueListEl = wrapper.createDiv({ cls: "ch-queue-list" });
 
-		this.failedListEl = wrapper.createDiv();
-		this.failedListEl.style.marginBottom = "8px";
+		this.failedListEl = wrapper.createDiv({ cls: "ch-queue-list" });
 
-		this.completedListEl = wrapper.createDiv();
-		this.completedListEl.style.marginBottom = "8px";
+		this.completedListEl = wrapper.createDiv({ cls: "ch-queue-list" });
 
-		const btnContainer = wrapper.createDiv();
-		btnContainer.style.display = "flex";
-		btnContainer.style.gap = "8px";
+		const btnContainer = wrapper.createDiv({ cls: "ch-queue-actions" });
 
 		const clearBtn = btnContainer.createEl("button", { text: "Clear pending queue" });
-		clearBtn.style.flex = "1";
 		clearBtn.addEventListener("click", () => {
 			this.plugin.clearQueue();
 			this.refresh();
 		});
 
 		const retryAllBtn = btnContainer.createEl("button", { text: "Retry all failed" });
-		retryAllBtn.style.flex = "1";
 		retryAllBtn.addEventListener("click", () => {
 			this.plugin.retryFailed();
 			this.refresh();
@@ -2025,23 +1923,14 @@ class QueueStatusModal extends Modal {
 		if (this.headerEl) {
 			if (processing) {
 				this.headerEl.setText("");
-				const h = this.headerEl.createEl("h3");
-				h.setText("Generating: " + this.getItemLabelLocal(processing));
-				h.style.margin = "0";
-				const badge = this.headerEl.createEl("span");
-				badge.setText(this.getItemModeName(processing));
-				badge.style.fontSize = "12px";
-				badge.style.color = "var(--text-on-accent)";
-				badge.style.backgroundColor = "var(--interactive-accent)";
-				badge.style.padding = "2px 8px";
-				badge.style.borderRadius = "10px";
-				badge.style.marginLeft = "8px";
-				badge.style.verticalAlign = "middle";
+				this.headerEl.createEl("h3", {
+					cls: "ch-queue-title",
+					text: "Generating: " + this.getItemLabelLocal(processing),
+				});
+				this.headerEl.createSpan({ cls: "ch-badge", text: this.getItemModeName(processing) });
 			} else {
 				this.headerEl.setText("");
-				const h = this.headerEl.createEl("h3");
-				h.setText("Queue idle");
-				h.style.margin = "0";
+				this.headerEl.createEl("h3", { cls: "ch-queue-title", text: "Queue idle" });
 			}
 		}
 
@@ -2076,28 +1965,18 @@ class QueueStatusModal extends Modal {
 		if (this.queueListEl) {
 			this.queueListEl.setText("");
 			if (queue.length > 0) {
-				const label = this.queueListEl.createDiv();
-				label.setText("Up next (" + queue.length + ")");
-				label.style.fontWeight = "600";
-				label.style.fontSize = "13px";
-				label.style.marginBottom = "4px";
+				this.queueListEl.createDiv({ cls: "ch-section-label", text: "Up next (" + queue.length + ")" });
 
 				for (let i = 0; i < queue.length; i++) {
 					const q = queue[i];
-					const row = this.queueListEl.createDiv();
-					row.style.display = "flex";
-					row.style.alignItems = "center";
-					row.style.padding = "4px 0";
+					const row = this.queueListEl.createDiv({ cls: "ch-queue-row" });
 
-					const nameSpan = row.createEl("span");
-					nameSpan.setText((i + 1) + ". " + this.getItemLabelLocal(q) + " - " + this.getItemModeName(q));
-					nameSpan.style.flex = "1";
-					nameSpan.style.fontSize = "13px";
+					row.createSpan({
+						cls: "ch-row-name",
+						text: (i + 1) + ". " + this.getItemLabelLocal(q) + " - " + this.getItemModeName(q),
+					});
 
-					const removeBtn = row.createEl("button", { text: "x" });
-					removeBtn.style.fontSize = "12px";
-					removeBtn.style.padding = "2px 6px";
-					removeBtn.style.cursor = "pointer";
+					const removeBtn = row.createEl("button", { cls: "ch-btn-small", text: "x" });
 					removeBtn.addEventListener("click", () => {
 						this.plugin.removeFromQueue(i);
 						this.refresh();
@@ -2110,42 +1989,26 @@ class QueueStatusModal extends Modal {
 		if (this.failedListEl) {
 			this.failedListEl.setText("");
 			if (failedItems.length > 0) {
-				const label = this.failedListEl.createDiv();
-				label.setText("Failed (" + failedItems.length + ")");
-				label.style.fontWeight = "600";
-				label.style.fontSize = "13px";
-				label.style.marginBottom = "4px";
-				label.style.color = "var(--text-error)";
+				this.failedListEl.createDiv({
+					cls: "ch-section-label ch-label-error",
+					text: "Failed (" + failedItems.length + ")",
+				});
 
 				for (let i = 0; i < failedItems.length; i++) {
 					const f = failedItems[i];
-					const row = this.failedListEl.createDiv();
-					row.style.display = "flex";
-					row.style.alignItems = "center";
-					row.style.padding = "4px 0";
-					row.style.gap = "6px";
+					const row = this.failedListEl.createDiv({ cls: "ch-queue-row" });
 
-					const nameSpan = row.createEl("span");
-					nameSpan.style.flex = "1";
-					nameSpan.style.fontSize = "13px";
 					const itemName = this.getItemLabelLocal(f.item);
 					const shortErr = f.error.length > 60 ? f.error.slice(0, 60) + "..." : f.error;
-					nameSpan.setText(itemName + " - " + shortErr);
-					nameSpan.style.color = "var(--text-muted)";
+					row.createSpan({ cls: "ch-row-name ch-row-name-muted", text: itemName + " - " + shortErr });
 
-					const retryBtn = row.createEl("button", { text: "Retry" });
-					retryBtn.style.fontSize = "12px";
-					retryBtn.style.padding = "2px 8px";
-					retryBtn.style.cursor = "pointer";
+					const retryBtn = row.createEl("button", { cls: "ch-btn-small", text: "Retry" });
 					retryBtn.addEventListener("click", () => {
 						this.plugin.retryOne(i);
 						this.refresh();
 					});
 
-					const dismissBtn = row.createEl("button", { text: "x" });
-					dismissBtn.style.fontSize = "12px";
-					dismissBtn.style.padding = "2px 6px";
-					dismissBtn.style.cursor = "pointer";
+					const dismissBtn = row.createEl("button", { cls: "ch-btn-small", text: "x" });
 					dismissBtn.addEventListener("click", () => {
 						this.plugin.dismissFailed(i);
 						this.refresh();
@@ -2158,39 +2021,26 @@ class QueueStatusModal extends Modal {
 		if (this.completedListEl) {
 			this.completedListEl.setText("");
 			if (completedItems.length > 0) {
-				const label = this.completedListEl.createDiv();
-				label.setText("Completed (" + completedItems.length + ")");
-				label.style.fontWeight = "600";
-				label.style.fontSize = "13px";
-				label.style.marginBottom = "4px";
-				label.style.color = "var(--text-success)";
+				this.completedListEl.createDiv({
+					cls: "ch-section-label ch-label-success",
+					text: "Completed (" + completedItems.length + ")",
+				});
 
 				const shown = completedItems.slice(-20).reverse();
 				for (const c of shown) {
-					const row = this.completedListEl.createDiv();
-					row.style.display = "flex";
-					row.style.alignItems = "center";
-					row.style.padding = "3px 0";
-					row.style.fontSize = "12px";
-					row.style.color = "var(--text-muted)";
+					const row = this.completedListEl.createDiv({ cls: "ch-completed-row" });
 
-					const nameSpan = row.createEl("span");
-					nameSpan.setText(this.getItemLabelLocal(c.item));
-					nameSpan.style.flex = "1";
+					row.createSpan({ cls: "ch-row-name", text: this.getItemLabelLocal(c.item) });
 
 					const secs = Math.round(c.elapsed / 1000);
-					const statsSpan = row.createEl("span");
-					statsSpan.setText(`${(c.chars / 1000).toFixed(1)}k chars, ${secs}s`);
-					statsSpan.style.marginLeft = "8px";
-					statsSpan.style.whiteSpace = "nowrap";
+					row.createSpan({ cls: "ch-row-stats", text: `${(c.chars / 1000).toFixed(1)}k chars, ${secs}s` });
 				}
 
 				if (completedItems.length > 20) {
-					const moreEl = this.completedListEl.createDiv();
-					moreEl.setText(`...and ${completedItems.length - 20} more`);
-					moreEl.style.fontSize = "11px";
-					moreEl.style.color = "var(--text-faint)";
-					moreEl.style.marginTop = "2px";
+					this.completedListEl.createDiv({
+						cls: "ch-more-note",
+						text: `...and ${completedItems.length - 20} more`,
+					});
 				}
 			}
 		}
@@ -2215,11 +2065,10 @@ class ScaleCalculatorModal extends Modal {
 	}
 
 	onOpen(): void {
-		ensureModalStyles();
 		const el = this.contentEl;
 		el.empty();
 		this.modalEl.addClass("ch-modal");
-		setModalTitle(this, "Scale Estimation Calculator");
+		setModalTitle(this, "Scale estimation calculator");
 
 		const wrapper = el.createDiv();
 		wrapper.createDiv({ cls: "ch-hint", text: "Enter values to generate a scale estimation table for your system design note." });
@@ -2244,7 +2093,7 @@ class ScaleCalculatorModal extends Modal {
 		}
 
 		const btnRow = wrapper.createDiv({ cls: "ch-btn-row" });
-		const btn = btnRow.createEl("button", { text: "Generate & Insert" });
+		const btn = btnRow.createEl("button", { text: "Generate & insert" });
 		btn.addClass("mod-cta");
 		btn.addEventListener("click", () => {
 			const dau = parseFloat(inputs.dau.value) || 0;
@@ -2315,21 +2164,20 @@ class ScaleCalculatorModal extends Modal {
 // ─── Scaffold Workspace Modal ───────────────────────────────────
 
 class ScaffoldWorkspaceModal extends Modal {
-	onSubmit: (name: string, sections: string[]) => void;
+	onSubmit: (name: string, sections: string[]) => void | Promise<void>;
 	selectedSections: Set<string>;
 
-	constructor(app: App, onSubmit: (name: string, sections: string[]) => void) {
+	constructor(app: App, onSubmit: (name: string, sections: string[]) => void | Promise<void>) {
 		super(app);
 		this.onSubmit = onSubmit;
 		this.selectedSections = new Set(["Systems", "Patterns", "Components", "Failures", "Tradeoffs", "Simulations", "Glossary"]);
 	}
 
 	onOpen(): void {
-		ensureModalStyles();
 		const el = this.contentEl;
 		el.empty();
 		this.modalEl.addClass("ch-modal");
-		setModalTitle(this, "Scaffold System Design Workspace");
+		setModalTitle(this, "Scaffold system design workspace");
 
 		const wrapper = el.createDiv();
 		wrapper.createDiv({ cls: "ch-hint", text: "Creates a folder hierarchy for organizing system design notes with an index note." });
@@ -2356,12 +2204,9 @@ class ScaffoldWorkspaceModal extends Modal {
 		const grid = wrapper.createDiv({ cls: "ch-grid" });
 		for (const sec of sections) {
 			const card = grid.createDiv({ cls: "ch-card is-selected" });
-			card.style.cursor = "pointer";
 
-			const cb = card.createEl("input", { type: "checkbox" });
+			const cb = card.createEl("input", { type: "checkbox", cls: "ch-card-checkbox" });
 			cb.checked = true;
-			cb.style.marginRight = "8px";
-			cb.style.flexShrink = "0";
 
 			const body = card.createDiv({ cls: "ch-card-body" });
 			body.createDiv({ cls: "ch-card-name", text: sec.id });
@@ -2395,7 +2240,7 @@ class ScaffoldWorkspaceModal extends Modal {
 		}
 
 		const btnRow = wrapper.createDiv({ cls: "ch-btn-row" });
-		const btn = btnRow.createEl("button", { text: "Create Workspace" });
+		const btn = btnRow.createEl("button", { text: "Create workspace" });
 		btn.addClass("mod-cta");
 		btn.addEventListener("click", () => {
 			const name = nameInput.value.trim();
@@ -2408,7 +2253,7 @@ class ScaffoldWorkspaceModal extends Modal {
 				return;
 			}
 			this.close();
-			this.onSubmit(name, Array.from(this.selectedSections));
+			void this.onSubmit(name, Array.from(this.selectedSections));
 		});
 	}
 
@@ -2420,7 +2265,7 @@ class ScaffoldWorkspaceModal extends Modal {
 // ─── Log Viewer Modal ────────────────────────────────────────────
 
 class LogViewerModal extends Modal {
-	private interval: ReturnType<typeof setInterval> | null = null;
+	private interval: number | null = null;
 	private pre: HTMLPreElement | null = null;
 	private lastLen = -1;
 
@@ -2431,12 +2276,12 @@ class LogViewerModal extends Modal {
 	onOpen() {
 		const { contentEl } = this;
 		contentEl.addClass("ch-modal");
-		setModalTitle(this, "Second Brain Builder Logs");
+		setModalTitle(this, "Second Brain Builder logs");
 
-		const btnRow = contentEl.createDiv({ attr: { style: "margin-bottom: 8px; display: flex; gap: 8px;" } });
+		const btnRow = contentEl.createDiv({ cls: "ch-log-btn-row" });
 		const copyBtn = btnRow.createEl("button", { text: "Copy to clipboard" });
 		copyBtn.onclick = () => {
-			navigator.clipboard.writeText(logger.getLog());
+			void navigator.clipboard.writeText(logger.getLog());
 			new Notice("Logs copied to clipboard");
 		};
 		const clearBtn = btnRow.createEl("button", { text: "Clear logs" });
@@ -2447,12 +2292,10 @@ class LogViewerModal extends Modal {
 			new Notice("Logs cleared");
 		};
 
-		this.pre = contentEl.createEl("pre", {
-			attr: { style: "max-height: 400px; overflow: auto; font-size: 11px; padding: 8px; background: var(--background-secondary); border-radius: 4px; white-space: pre-wrap; word-break: break-all;" },
-		});
+		this.pre = contentEl.createEl("pre", { cls: "ch-log-pre" });
 
 		this.refresh();
-		this.interval = setInterval(() => this.refresh(), 1000);
+		this.interval = window.setInterval(() => this.refresh(), 1000);
 	}
 
 	private refresh() {
@@ -2465,7 +2308,7 @@ class LogViewerModal extends Modal {
 	}
 
 	onClose() {
-		if (this.interval) clearInterval(this.interval);
+		if (this.interval !== null) window.clearInterval(this.interval);
 		this.contentEl.empty();
 	}
 }
@@ -2515,9 +2358,9 @@ export default class ClaudeExplainerPlugin extends Plugin {
 				new NoteCreatorModal(this.app, this.getStandardModes(), selection, this.settings.lastModeId || this.settings.defaultModeId, (configs) => {
 					const linkReplacement = this.buildLinkReplacement(editor, from, to, selection, configs);
 					for (const config of configs) {
-						this.enqueueNote(editor, view, selection, config, linkReplacement);
+						void this.enqueueNote(editor, view, selection, config, linkReplacement);
 					}
-				}, (modeId) => this.saveLastMode(modeId)).open();
+				}, (modeId) => { void this.saveLastMode(modeId); }).open();
 			},
 		});
 
@@ -2584,7 +2427,7 @@ export default class ClaudeExplainerPlugin extends Plugin {
 					return;
 				}
 				new FullNoteActionModal(this.app, fullNoteModes, file.basename, (mode, extraInstructions) => {
-					this.enqueueAppend(editor, file, mode, extraInstructions);
+					void this.enqueueAppend(editor, file, mode, extraInstructions);
 				}).open();
 			},
 		});
@@ -2598,7 +2441,7 @@ export default class ClaudeExplainerPlugin extends Plugin {
 				const folderPath = activeFile?.parent?.path ?? "";
 				const standardModes = this.getStandardModes();
 				new TopicGeneratorModal(this.app, standardModes, folderPath, (topic, mode, isMulti, extraInstructions) => {
-					this.generateTopicNotes(topic, mode, isMulti, folderPath, extraInstructions);
+					void this.generateTopicNotes(topic, mode, isMulti, folderPath, extraInstructions);
 				}).open();
 			},
 		});
@@ -2629,9 +2472,9 @@ export default class ClaudeExplainerPlugin extends Plugin {
 					sources,
 					this.settings.lastModeId || this.settings.defaultModeId,
 					(mode, ctx, extraInstructions) => {
-						this.enqueueFillNote(file, mode, ctx, extraInstructions);
+						void this.enqueueFillNote(file, mode, ctx, extraInstructions);
 					},
-					(modeId) => this.saveLastMode(modeId),
+					(modeId) => { void this.saveLastMode(modeId); },
 				).open();
 			},
 		});
@@ -2680,9 +2523,9 @@ export default class ClaudeExplainerPlugin extends Plugin {
 								new NoteCreatorModal(this.app, this.getStandardModes(), selection, this.settings.lastModeId || this.settings.defaultModeId, (configs) => {
 									const linkReplacement = this.buildLinkReplacement(editor, from, to, selection, configs);
 									for (const config of configs) {
-										this.enqueueNote(editor, view, selection, config, linkReplacement);
+										void this.enqueueNote(editor, view, selection, config, linkReplacement);
 									}
-								}, (modeId) => this.saveLastMode(modeId)).open();
+								}, (modeId) => { void this.saveLastMode(modeId); }).open();
 							});
 					});
 
@@ -2701,9 +2544,9 @@ export default class ClaudeExplainerPlugin extends Plugin {
 				if (selection) {
 					// Individual inline action entries in a submenu
 					menu.addItem((item) => {
-						const sub = (item as any).setTitle("Claude actions")
-							.setIcon("sparkles")
-							.setSubmenu() as Menu;
+						const sub = (item.setTitle("Claude actions")
+							.setIcon("sparkles") as MenuItem & { setSubmenu(): Menu })
+							.setSubmenu();
 
 						for (const action of INLINE_ACTIONS) {
 							sub.addItem((subItem) => {
@@ -2729,7 +2572,7 @@ export default class ClaudeExplainerPlugin extends Plugin {
 								.setIcon("brain")
 								.onClick(() => {
 									new FullNoteActionModal(this.app, fullNoteModes, file.basename, (mode, extraInstructions) => {
-										this.enqueueAppend(editor, file, mode, extraInstructions);
+										void this.enqueueAppend(editor, file, mode, extraInstructions);
 									}).open();
 								});
 						});
@@ -2751,9 +2594,9 @@ export default class ClaudeExplainerPlugin extends Plugin {
 										sources,
 										this.settings.lastModeId || this.settings.defaultModeId,
 										(mode, ctx, extraInstructions) => {
-											this.enqueueFillNote(file, mode, ctx, extraInstructions);
+											void this.enqueueFillNote(file, mode, ctx, extraInstructions);
 										},
-										(modeId) => this.saveLastMode(modeId),
+										(modeId) => { void this.saveLastMode(modeId); },
 									).open();
 								});
 						});
@@ -2778,7 +2621,7 @@ export default class ClaudeExplainerPlugin extends Plugin {
 								file.path,
 								file.name,
 								(scenario, mode, extraInstructions) => {
-									this.generateKnowledgeNotes(scenario, mode, file.path, extraInstructions);
+									void this.generateKnowledgeNotes(scenario, mode, file.path, extraInstructions);
 								},
 							).open();
 						});
@@ -2795,7 +2638,7 @@ export default class ClaudeExplainerPlugin extends Plugin {
 								file.path,
 								file.name,
 								(topic, mode, extraInstructions) => {
-									this.addTopicToFolder(topic, mode, file, extraInstructions);
+									void this.addTopicToFolder(topic, mode, file, extraInstructions);
 								},
 							).open();
 						});
@@ -2816,7 +2659,7 @@ export default class ClaudeExplainerPlugin extends Plugin {
 								file.name,
 								existingNotes,
 								(direction, mode, extraInstructions) => {
-									this.expandFolderNotes(direction, mode, file, extraInstructions);
+									void this.expandFolderNotes(direction, mode, file, extraInstructions);
 								},
 							).open();
 						});
@@ -2833,7 +2676,7 @@ export default class ClaudeExplainerPlugin extends Plugin {
 								file.path,
 								file.name,
 								(mode, extraContent) => {
-									this.analyzeFolderNotes(file, mode, extraContent);
+									void this.analyzeFolderNotes(file, mode, extraContent);
 								},
 							).open();
 						});
@@ -2856,7 +2699,7 @@ export default class ClaudeExplainerPlugin extends Plugin {
 								analysisModes,
 								file,
 								(mode, extraContent) => {
-									this.analyzeExistingNote(file, mode, extraContent);
+									void this.analyzeExistingNote(file, mode, extraContent);
 								},
 							).open();
 						});
@@ -2879,7 +2722,7 @@ export default class ClaudeExplainerPlugin extends Plugin {
 					folderPath,
 					folderName,
 					(scenario, mode, extraInstructions) => {
-						this.generateKnowledgeNotes(scenario, mode, folderPath, extraInstructions);
+						void this.generateKnowledgeNotes(scenario, mode, folderPath, extraInstructions);
 					},
 				).open();
 			},
@@ -2899,7 +2742,7 @@ export default class ClaudeExplainerPlugin extends Plugin {
 	}
 
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, (await this.loadData()) as Partial<ClaudeExplainerSettings> | null);
 		logger.setEnabled(this.settings.enableLogging);
 	}
 
@@ -2956,7 +2799,7 @@ export default class ClaudeExplainerPlugin extends Plugin {
 		this.updateStatusBar();
 		new Notice(`Re-queued ${count} failed item(s).`);
 		if (!this.isProcessing) {
-			this.processQueue();
+			void this.processQueue();
 		}
 	}
 
@@ -2967,7 +2810,7 @@ export default class ClaudeExplainerPlugin extends Plugin {
 		this.updateStatusBar();
 		new Notice(`Re-queued "${this.getItemLabel(removed.item)}".`);
 		if (!this.isProcessing) {
-			this.processQueue();
+			void this.processQueue();
 		}
 	}
 
@@ -3103,7 +2946,7 @@ export default class ClaudeExplainerPlugin extends Plugin {
 		this.updateStatusBar();
 
 		if (!this.isProcessing) {
-			this.processQueue();
+			void this.processQueue();
 		}
 	}
 
@@ -3138,7 +2981,7 @@ export default class ClaudeExplainerPlugin extends Plugin {
 		this.updateStatusBar();
 
 		if (!this.isProcessing) {
-			this.processQueue();
+			void this.processQueue();
 		}
 	}
 
@@ -3197,7 +3040,7 @@ export default class ClaudeExplainerPlugin extends Plugin {
 		this.updateStatusBar();
 
 		if (!this.isProcessing) {
-			this.processQueue();
+			void this.processQueue();
 		}
 	}
 
@@ -3226,7 +3069,7 @@ export default class ClaudeExplainerPlugin extends Plugin {
 		this.updateStatusBar();
 
 		if (!this.isProcessing) {
-			this.processQueue();
+			void this.processQueue();
 		}
 	}
 
@@ -3322,7 +3165,7 @@ export default class ClaudeExplainerPlugin extends Plugin {
 			this.updateStatusBar();
 
 			if (!this.isProcessing) {
-				this.processQueue();
+				void this.processQueue();
 			}
 			return;
 		}
@@ -3354,17 +3197,17 @@ ${extraInstructions ? `\nAdditional context: ${extraInstructions}` : ""}`;
 			let subtopics: { title: string; description: string; related: string[] }[];
 			try {
 				const jsonStr = extractJsonArray(rawResponse);
-				subtopics = JSON.parse(jsonStr);
+				subtopics = JSON.parse(jsonStr) as typeof subtopics;
 			} catch {
 				new Notice("Failed to parse topic decomposition. Falling back to single note.", 8000);
 				console.error("Claude topic decomposition parse error. Raw response:", rawResponse);
-				this.generateTopicNotes(topic, mode, false, folderPath, extraInstructions);
+				void this.generateTopicNotes(topic, mode, false, folderPath, extraInstructions);
 				return;
 			}
 
 			if (!Array.isArray(subtopics) || subtopics.length === 0) {
 				new Notice("No sub-topics generated. Falling back to single note.", 5000);
-				this.generateTopicNotes(topic, mode, false, folderPath, extraInstructions);
+				void this.generateTopicNotes(topic, mode, false, folderPath, extraInstructions);
 				return;
 			}
 
@@ -3439,7 +3282,7 @@ Use [[Note Title]] format for all links to sub-notes.` + getOutputRules();
 			this.updateStatusBar();
 
 			if (!this.isProcessing) {
-				this.processQueue();
+				void this.processQueue();
 			}
 		} catch (err: unknown) {
 			const msg = err instanceof Error ? err.message : String(err);
@@ -3487,7 +3330,7 @@ ${extraInstructions ? `\nAdditional context from the user: ${extraInstructions}`
 			let subtopics: { title: string; scope: string; related: string[]; order: number }[];
 			try {
 				const jsonStr = extractJsonArray(rawResponse);
-				subtopics = JSON.parse(jsonStr);
+				subtopics = JSON.parse(jsonStr) as typeof subtopics;
 			} catch {
 				new Notice("Failed to parse note plan. Check logs for details.", 8000);
 				logger.error("Knowledge notes parse error. Raw response: " + rawResponse.slice(0, 500));
@@ -3590,7 +3433,7 @@ Use [[Note Title]] format for all links to sub-notes.` + getOutputRules();
 			this.updateStatusBar();
 
 			if (!this.isProcessing) {
-				this.processQueue();
+				void this.processQueue();
 			}
 		} catch (err: unknown) {
 			const msg = err instanceof Error ? err.message : String(err);
@@ -3656,7 +3499,7 @@ Use [[Note Title]] format for all links to sub-notes.` + getOutputRules();
 		this.updateStatusBar();
 
 		if (!this.isProcessing) {
-			this.processQueue();
+			void this.processQueue();
 		}
 	}
 
@@ -3717,7 +3560,7 @@ ${extraInstructions ? `\nAdditional context from the user: ${extraInstructions}`
 			let subtopics: { title: string; scope: string; related: string[]; order: number }[];
 			try {
 				const jsonStr = extractJsonArray(rawResponse);
-				subtopics = JSON.parse(jsonStr);
+				subtopics = JSON.parse(jsonStr) as typeof subtopics;
 			} catch {
 				new Notice("Failed to parse note plan. Check logs for details.", 8000);
 				logger.error("Expand folder parse error. Raw response: " + rawResponse.slice(0, 500));
@@ -3809,7 +3652,7 @@ ${extraInstructions ? `\nAdditional context from the user: ${extraInstructions}`
 			this.updateStatusBar();
 
 			if (!this.isProcessing) {
-				this.processQueue();
+				void this.processQueue();
 			}
 		} catch (err: unknown) {
 			const msg = err instanceof Error ? err.message : String(err);
@@ -3861,7 +3704,7 @@ ${extraInstructions ? `\nAdditional context from the user: ${extraInstructions}`
 		this.updateStatusBar();
 
 		if (!this.isProcessing) {
-			this.processQueue();
+			void this.processQueue();
 		}
 	}
 
@@ -3936,7 +3779,7 @@ Rules:
 			let subtopics: { title: string; scope: string; related: string[]; order: number }[];
 			try {
 				const jsonStr = extractJsonArray(rawResponse);
-				subtopics = JSON.parse(jsonStr);
+				subtopics = JSON.parse(jsonStr) as typeof subtopics;
 			} catch {
 				new Notice("Failed to parse analysis plan. Check logs.", 8000);
 				logger.error("Folder analysis parse error. Raw: " + rawResponse.slice(0, 500));
@@ -3991,7 +3834,7 @@ Rules:
 			this.updateStatusBar();
 
 			if (!this.isProcessing) {
-				this.processQueue();
+				void this.processQueue();
 			}
 		} catch (err: unknown) {
 			const msg = err instanceof Error ? err.message : String(err);
@@ -4230,8 +4073,9 @@ Rules:
 				headers: { "Content-Type": "application/json" },
 				body,
 			});
-		} catch (err: any) {
-			throw new Error(`Ollama connection failed: ${err.message}. Is Ollama running at ${this.settings.ollamaUrl}?`);
+		} catch (err) {
+			const msg = err instanceof Error ? err.message : String(err);
+			throw new Error(`Ollama connection failed: ${msg}. Is Ollama running at ${this.settings.ollamaUrl}?`);
 		}
 
 		if (!response.ok) {
@@ -4253,7 +4097,7 @@ Rules:
 			for (const line of lines) {
 				if (!line.trim()) continue;
 				try {
-					const json = JSON.parse(line);
+					const json = JSON.parse(line) as { error?: string; response?: string };
 					if (json.error) {
 						throw new Error(`Ollama: ${json.error}`);
 					}
@@ -4261,15 +4105,15 @@ Rules:
 						output += json.response;
 						this.streamData.currentOutput = output;
 					}
-				} catch (e: any) {
-					if (e.message.startsWith("Ollama:")) throw e;
+				} catch (e) {
+					if (e instanceof Error && e.message.startsWith("Ollama:")) throw e;
 				}
 			}
 		}
 
 		if (buffer.trim()) {
 			try {
-				const json = JSON.parse(buffer);
+				const json = JSON.parse(buffer) as { response?: string };
 				if (json.response) output += json.response;
 			} catch { /* ignore trailing incomplete chunk */ }
 		}
@@ -4293,10 +4137,8 @@ class ClaudeExplainerSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 
-		containerEl.createEl("h2", { text: "Second Brain Builder Settings" });
-
 		new Setting(containerEl)
-			.setName("AI Provider")
+			.setName("AI provider")
 			.setDesc("Which AI backend to use for generating notes.")
 			.addDropdown((dropdown) => {
 				dropdown.addOption("claude", "Claude");
@@ -4450,31 +4292,18 @@ class ClaudeExplainerSettingTab extends PluginSettingTab {
 			// Model recommendation card
 			const activeModel = ollamaModels.find(m => m.value === this.plugin.settings.ollamaModel);
 			if (activeModel) {
-				const recEl = containerEl.createDiv({ cls: "setting-item" });
-				recEl.style.borderLeft = "3px solid var(--interactive-accent)";
-				recEl.style.paddingLeft = "12px";
-				recEl.style.marginBottom = "12px";
-				const recTitle = recEl.createEl("strong", { text: activeModel.label });
-				recTitle.style.display = "block";
-				recTitle.style.marginBottom = "4px";
-				const recDesc = recEl.createEl("span", { text: activeModel.desc });
-				recDesc.style.color = "var(--text-muted)";
-				recDesc.style.fontSize = "13px";
+				const recEl = containerEl.createDiv({ cls: "setting-item ch-rec-card" });
+				recEl.createEl("strong", { cls: "ch-strong-block ch-gap-below", text: activeModel.label });
+				recEl.createSpan({ cls: "ch-muted-note", text: activeModel.desc });
 			}
 
 			// Model comparison table
-			containerEl.createEl("h3", { text: "Model Comparison" });
-			const table = containerEl.createEl("table");
-			table.style.width = "100%";
-			table.style.fontSize = "13px";
-			table.style.borderCollapse = "collapse";
+			new Setting(containerEl).setName("Model comparison").setHeading();
+			const table = containerEl.createEl("table", { cls: "ch-settings-table" });
 			const thead = table.createEl("thead");
 			const headerRow = thead.createEl("tr");
-			for (const h of ["Model", "Size", "Speed", "Best For"]) {
-				const th = headerRow.createEl("th", { text: h });
-				th.style.textAlign = "left";
-				th.style.padding = "6px 8px";
-				th.style.borderBottom = "1px solid var(--background-modifier-border)";
+			for (const h of ["Model", "Size", "Speed", "Best for"]) {
+				headerRow.createEl("th", { text: h });
 			}
 			const tbody = table.createEl("tbody");
 			const rows = [
@@ -4485,18 +4314,13 @@ class ClaudeExplainerSettingTab extends PluginSettingTab {
 			for (const row of rows) {
 				const tr = tbody.createEl("tr");
 				for (const cell of row) {
-					const td = tr.createEl("td", { text: cell });
-					td.style.padding = "6px 8px";
-					td.style.borderBottom = "1px solid var(--background-modifier-border)";
+					tr.createEl("td", { text: cell });
 				}
 			}
 
 			// Ollama setup guide
-			containerEl.createEl("h3", { text: "Ollama Setup Guide" });
-			const guideEl = containerEl.createDiv();
-			guideEl.style.fontSize = "13px";
-			guideEl.style.color = "var(--text-muted)";
-			guideEl.style.lineHeight = "1.6";
+			new Setting(containerEl).setName("Ollama setup guide").setHeading();
+			const guideEl = containerEl.createDiv({ cls: "ch-guide" });
 
 			const steps = [
 				{ title: "1. Install Ollama", text: "Download and install from ollama.com. Available for Windows, macOS, and Linux." },
@@ -4509,33 +4333,20 @@ class ClaudeExplainerSettingTab extends PluginSettingTab {
 			];
 
 			for (const step of steps) {
-				const stepEl = guideEl.createDiv();
-				stepEl.style.marginBottom = "6px";
+				const stepEl = guideEl.createDiv({ cls: "ch-guide-step" });
 				if (step.title) {
-					const titleEl = stepEl.createEl("strong", { text: step.title });
-					titleEl.style.display = "block";
-					titleEl.style.color = "var(--text-normal)";
-					titleEl.style.marginTop = "8px";
+					stepEl.createEl("strong", { cls: "ch-strong-block ch-gap-above", text: step.title });
 				}
-				if (step.title === "" ) {
-					const codeEl = stepEl.createEl("code", { text: step.text });
-					codeEl.style.display = "block";
-					codeEl.style.padding = "4px 8px";
-					codeEl.style.backgroundColor = "var(--background-secondary)";
-					codeEl.style.borderRadius = "4px";
-					codeEl.style.fontFamily = "var(--font-monospace)";
-					codeEl.style.marginLeft = "16px";
+				if (step.title === "") {
+					stepEl.createEl("code", { cls: "ch-guide-code", text: step.text });
 				} else {
 					stepEl.createSpan({ text: step.text });
 				}
 			}
 
 			// Platform-specific notes
-			containerEl.createEl("h3", { text: "Platform Notes" });
-			const platformEl = containerEl.createDiv();
-			platformEl.style.fontSize = "13px";
-			platformEl.style.color = "var(--text-muted)";
-			platformEl.style.lineHeight = "1.6";
+			new Setting(containerEl).setName("Platform notes").setHeading();
+			const platformEl = containerEl.createDiv({ cls: "ch-guide" });
 
 			const platforms = [
 				{
@@ -4571,18 +4382,9 @@ class ClaudeExplainerSettingTab extends PluginSettingTab {
 			];
 
 			for (const platform of platforms) {
-				const pEl = platformEl.createDiv();
-				pEl.style.marginBottom = "12px";
-				pEl.style.padding = "8px 12px";
-				pEl.style.backgroundColor = "var(--background-secondary)";
-				pEl.style.borderRadius = "6px";
-				const pTitle = pEl.createEl("strong", { text: platform.name });
-				pTitle.style.display = "block";
-				pTitle.style.color = "var(--text-normal)";
-				pTitle.style.marginBottom = "4px";
+				const pEl = platformEl.createDiv({ cls: "ch-platform-card" });
+				pEl.createEl("strong", { cls: "ch-strong-block ch-gap-below", text: platform.name });
 				const ul = pEl.createEl("ul");
-				ul.style.margin = "0";
-				ul.style.paddingLeft = "20px";
 				for (const note of platform.notes) {
 					ul.createEl("li", { text: note });
 				}
@@ -4618,19 +4420,19 @@ class ClaudeExplainerSettingTab extends PluginSettingTab {
 				});
 			});
 
-		containerEl.createEl("h3", { text: "Built-in Note Modes" });
-		const builtinList = containerEl.createEl("p");
-		builtinList.setText((BUILTIN_MODES as NoteMode[]).map(m => m.name).join(", "));
-		builtinList.style.color = "var(--text-muted)";
-		builtinList.style.fontSize = "13px";
+		new Setting(containerEl).setName("Built-in note modes").setHeading();
+		containerEl.createEl("p", {
+			cls: "ch-muted-note",
+			text: (BUILTIN_MODES as NoteMode[]).map(m => m.name).join(", "),
+		});
 
-		containerEl.createEl("h3", { text: "Inline Actions" });
-		const inlineList = containerEl.createEl("p");
-		inlineList.setText(INLINE_ACTIONS.map(a => a.name).join(", "));
-		inlineList.style.color = "var(--text-muted)";
-		inlineList.style.fontSize = "13px";
+		new Setting(containerEl).setName("Inline actions").setHeading();
+		containerEl.createEl("p", {
+			cls: "ch-muted-note",
+			text: INLINE_ACTIONS.map(a => a.name).join(", "),
+		});
 
-		containerEl.createEl("h3", { text: "Custom Modes" });
+		new Setting(containerEl).setName("Custom modes").setHeading();
 		containerEl.createEl("p", {
 			text: "Add your own modes. Each mode needs an ID, name, description, and prompt template. Use {selection} and {context} as placeholders in your prompt.",
 			cls: "setting-item-description",
@@ -4638,11 +4440,7 @@ class ClaudeExplainerSettingTab extends PluginSettingTab {
 
 		for (let i = 0; i < this.plugin.settings.customModes.length; i++) {
 			const mode = this.plugin.settings.customModes[i];
-			const modeContainer = containerEl.createDiv();
-			modeContainer.style.border = "1px solid var(--background-modifier-border)";
-			modeContainer.style.borderRadius = "8px";
-			modeContainer.style.padding = "12px";
-			modeContainer.style.marginBottom = "8px";
+			const modeContainer = containerEl.createDiv({ cls: "ch-custom-mode" });
 
 			new Setting(modeContainer)
 				.setName("Mode name")
@@ -4671,7 +4469,7 @@ class ClaudeExplainerSettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					});
 					text.inputEl.rows = 6;
-					text.inputEl.style.width = "100%";
+					text.inputEl.addClass("ch-full-width-input");
 				});
 
 			new Setting(modeContainer)

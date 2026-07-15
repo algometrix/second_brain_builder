@@ -1,134 +1,403 @@
-.claude-helper-modal h2 {
-  margin-bottom: 12px;
+/* ─── Shared modal shell ───────────────────────────────────────── */
+
+.ch-modal {
+  max-width: 620px;
 }
 
-.claude-helper-grid {
+.ch-modal.ch-modal-wide {
+  max-width: 720px;
+}
+
+.ch-modal .modal-content {
+  padding: 16px 20px;
+}
+
+.ch-modal .modal-title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.ch-label {
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.ch-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.ch-search {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.ch-hidden {
+  display: none;
+}
+
+/* ─── Mode picker grid ─────────────────────────────────────────── */
+
+.ch-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  gap: 6px;
+  margin-bottom: 14px;
+  max-height: 260px;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
-.claude-helper-mode-btn {
-  padding: 12px 16px;
+.ch-grid.ch-grid-3col {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.ch-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 12px;
   border: 1px solid var(--background-modifier-border);
   border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: all 0.15s ease;
 }
 
-.claude-helper-mode-btn:hover {
+.ch-card:hover {
   background-color: var(--background-modifier-hover);
   border-color: var(--interactive-accent);
 }
 
-.claude-helper-mode-name {
-  font-weight: 600;
-  font-size: 14px;
-  margin-bottom: 4px;
-}
-
-.claude-helper-mode-desc {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-.claude-helper-mode-btn.claude-helper-mode-selected {
+.ch-card.is-selected {
   background-color: var(--interactive-accent);
   border-color: var(--interactive-accent);
   color: var(--text-on-accent);
 }
 
-.claude-helper-mode-btn.claude-helper-mode-selected .claude-helper-mode-desc {
+.ch-card.is-selected .ch-card-desc {
   color: var(--text-on-accent);
   opacity: 0.85;
 }
 
-.claude-helper-label {
-  display: block;
+.ch-card-icon {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  opacity: 0.7;
+}
+
+.ch-card.is-selected .ch-card-icon {
+  opacity: 1;
+}
+
+.ch-card-body {
+  min-width: 0;
+}
+
+.ch-card-name {
   font-weight: 600;
-  font-size: 14px;
-  margin-bottom: 8px;
+  font-size: 13px;
+  line-height: 1.3;
 }
 
-.claude-helper-config-section {
-  margin-top: 16px;
-  padding-top: 12px;
+.ch-card-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.3;
+  margin-top: 1px;
+}
+
+.ch-card-checkbox {
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.ch-empty {
+  padding: 16px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+  grid-column: 1 / -1;
+}
+
+/* ─── Modal form elements ──────────────────────────────────────── */
+
+.ch-sep {
   border-top: 1px solid var(--background-modifier-border);
+  padding-top: 12px;
+  margin-top: 4px;
 }
 
-.claude-helper-title-input {
-  width: 100% !important;
+.ch-input {
+  width: 100%;
+  margin-bottom: 12px;
 }
 
-.claude-helper-extra-input {
-  width: 100% !important;
-  min-height: 60px;
+.ch-textarea {
+  width: 100%;
+  min-height: 50px;
+  margin-bottom: 12px;
 }
 
-.claude-helper-btn-row {
+.ch-textarea.ch-textarea-sm {
+  min-height: 80px;
+}
+
+.ch-textarea.ch-textarea-md {
+  min-height: 100px;
+}
+
+.ch-textarea.ch-textarea-lg {
+  min-height: 120px;
+}
+
+.ch-textarea.ch-textarea-xl {
+  min-height: 160px;
+}
+
+.ch-btn-row {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
-  margin-top: 16px;
+  margin-top: 4px;
 }
 
-/* Queue status modal */
-.claude-helper-queue-section {
-  margin-bottom: 16px;
-}
-
-.claude-helper-queue-section h3 {
-  margin-bottom: 8px;
-  font-size: 14px;
-  color: var(--text-muted);
-}
-
-.claude-helper-queue-item {
+.ch-format-row {
   display: flex;
-  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.ch-backlink-info {
   padding: 8px 12px;
-  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
   border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+.ch-existing-list {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  max-height: 80px;
+  overflow-y: auto;
+}
+
+/* ─── Queue status modal ───────────────────────────────────────── */
+
+.ch-queue-wrapper {
+  padding: 8px;
+  min-width: 500px;
+}
+
+.ch-queue-header {
+  margin-bottom: 12px;
+}
+
+.ch-queue-title {
+  display: inline;
+  margin: 0;
+}
+
+.ch-badge {
+  font-size: 12px;
+  color: var(--text-on-accent);
+  background-color: var(--interactive-accent);
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.ch-queue-timer {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.ch-section-label {
+  font-weight: 600;
+  font-size: 13px;
   margin-bottom: 4px;
 }
 
-.claude-helper-queue-active {
-  border-color: var(--interactive-accent);
-  background-color: var(--background-modifier-hover);
+.ch-section-label.ch-label-error {
+  color: var(--text-error);
 }
 
-.claude-helper-queue-name {
-  font-weight: 600;
+.ch-section-label.ch-label-success {
+  color: var(--text-success);
+}
+
+.ch-queue-preview {
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 10px;
+  font-size: 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  background-color: var(--background-secondary);
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin-bottom: 12px;
+}
+
+.ch-queue-list {
+  margin-bottom: 8px;
+}
+
+.ch-queue-row {
+  display: flex;
+  align-items: center;
+  padding: 4px 0;
+  gap: 6px;
+}
+
+.ch-row-name {
   flex: 1;
+  font-size: 13px;
 }
 
-.claude-helper-queue-mode {
+.ch-row-name.ch-row-name-muted {
+  color: var(--text-muted);
+}
+
+.ch-completed-row {
+  display: flex;
+  align-items: center;
+  padding: 3px 0;
   font-size: 12px;
   color: var(--text-muted);
-  margin-right: 8px;
 }
 
-.claude-helper-queue-remove {
+.ch-row-stats {
+  margin-left: 8px;
+  white-space: nowrap;
+}
+
+.ch-more-note {
+  font-size: 11px;
+  color: var(--text-faint);
+  margin-top: 2px;
+}
+
+.ch-btn-small {
   font-size: 12px;
+  padding: 2px 8px;
   cursor: pointer;
 }
 
-.claude-helper-queue-clear {
-  margin-top: 12px;
-  width: 100%;
+.ch-queue-actions {
+  display: flex;
+  gap: 8px;
 }
 
-.claude-helper-queue-empty {
+.ch-queue-actions > button {
+  flex: 1;
+}
+
+/* ─── Log viewer modal ─────────────────────────────────────────── */
+
+.ch-log-btn-row {
+  margin-bottom: 8px;
+  display: flex;
+  gap: 8px;
+}
+
+.ch-log-pre {
+  max-height: 400px;
+  overflow: auto;
+  font-size: 11px;
+  padding: 8px;
+  background: var(--background-secondary);
+  border-radius: 4px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* ─── Settings tab ─────────────────────────────────────────────── */
+
+.ch-rec-card {
+  border-left: 3px solid var(--interactive-accent);
+  padding-left: 12px;
+  margin-bottom: 12px;
+}
+
+.ch-strong-block {
+  display: block;
+  color: var(--text-normal);
+}
+
+.ch-strong-block.ch-gap-below {
+  margin-bottom: 4px;
+}
+
+.ch-strong-block.ch-gap-above {
+  margin-top: 8px;
+}
+
+.ch-muted-note {
   color: var(--text-muted);
-  font-style: italic;
+  font-size: 13px;
 }
 
-.claude-helper-spinner {
-  color: var(--interactive-accent);
-  animation: claude-helper-pulse 1.5s infinite;
+.ch-settings-table {
+  width: 100%;
+  font-size: 13px;
+  border-collapse: collapse;
 }
 
-@keyframes claude-helper-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
+.ch-settings-table th {
+  text-align: left;
+}
+
+.ch-settings-table th,
+.ch-settings-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.ch-guide {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.ch-guide-step {
+  margin-bottom: 6px;
+}
+
+.ch-guide-code {
+  display: block;
+  padding: 4px 8px;
+  background-color: var(--background-secondary);
+  border-radius: 4px;
+  font-family: var(--font-monospace);
+  margin-left: 16px;
+}
+
+.ch-platform-card {
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  background-color: var(--background-secondary);
+  border-radius: 6px;
+}
+
+.ch-platform-card ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.ch-custom-mode {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 8px;
+}
+
+.ch-full-width-input {
+  width: 100%;
 }
