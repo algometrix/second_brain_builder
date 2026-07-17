@@ -142,7 +142,7 @@ claude          # run once in a terminal to log in
 
 The plugin calls the CLI in read-only mode with file-modifying tools disabled.
 
-> **Note:** the plugin invokes `claude -p` (print mode). This flag might be discontinued soon. If generation stops working after a CLI update, check for a plugin update or switch to another provider in settings.
+> **Note:** the plugin invokes `claude -p` (print mode). Anthropic has announced (currently paused) plans to bill programmatic usage like `claude -p` separately from Pro/Max subscription limits, as extra usage at API rates. If that change ships, plugin usage may no longer be covered by your plan. Also note that generating notes can consume a lot of tokens, especially with large selections or batch generation, so watch your usage limits.
 
 ### Gemini CLI
 
