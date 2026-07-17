@@ -21,8 +21,16 @@ if (fs.existsSync(personal)) {
   }
 }
 
+// Stamp the version into main.js and styles.css so every release's assets have
+// unique digests. Identical assets across releases share a digest and collect
+// one build-provenance attestation per release; Obsidian's community-plugin
+// verification rejects assets whose digest has multiple attestations.
+const version = JSON.parse(fs.readFileSync(path.join(root, 'manifest.json'), 'utf8')).version;
+const banner = `/* Second Brain Builder ${version} */\n`;
+
 fs.mkdirSync(outDir, { recursive: true });
-for (const name of ['main.js', 'manifest.json', 'styles.css']) {
-  fs.copyFileSync(path.join(root, name), path.join(outDir, name));
+fs.copyFileSync(path.join(root, 'manifest.json'), path.join(outDir, 'manifest.json'));
+for (const name of ['main.js', 'styles.css']) {
+  fs.writeFileSync(path.join(outDir, name), banner + fs.readFileSync(path.join(root, name), 'utf8'));
 }
-console.log(`Release assets written to release/ (main.js, manifest.json, styles.css)`);
+console.log(`Release assets written to release/ (main.js, manifest.json, styles.css) for version ${version}`);

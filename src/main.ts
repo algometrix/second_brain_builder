@@ -1,6 +1,6 @@
 import { App, Editor, EditorPosition, FileSystemAdapter, MarkdownView, Menu, MenuItem, Notice, Plugin, TFile, TFolder, normalizePath, requestUrl, RequestUrlResponse } from "obsidian";
 import BUILTIN_MODES from "../modes.json";
-import { AIProvider, ClaudeExplainerSettings, DEFAULT_SETTINGS, InlineAction, InlineActionConfig, NoteConfig, NoteMode, PendingLinkReplacement, PROVIDER_LABELS, QueueItem } from "./types";
+import { ClaudeExplainerSettings, DEFAULT_SETTINGS, InlineActionConfig, NoteConfig, NoteMode, PendingLinkReplacement, PROVIDER_LABELS, QueueItem } from "./types";
 import { INLINE_ACTIONS } from "./inline-actions";
 import { APPEND_OUTPUT_RULES, INLINE_OUTPUT_RULES, getOutputRules } from "./output-rules";
 import { spawnCli } from "./cli";
@@ -1743,12 +1743,12 @@ Rules:
 			let stdout = "";
 			let stderr = "";
 
-			proc.stdout.on("data", (data: Buffer) => {
+			proc.stdout.on("data", (data) => {
 				const chunk = data.toString();
 				stdout += chunk;
 				this.streamData.currentOutput = stdout;
 			});
-			proc.stderr.on("data", (data: Buffer) => { stderr += data.toString(); });
+			proc.stderr.on("data", (data) => { stderr += data.toString(); });
 
 			const cliNotFoundError = () => new Error(
 				`${providerLabel} CLI not found (looked for "${execPath}"). Install it, or set its full path in Settings -> Second Brain Builder. See the README's Troubleshooting section for PATH fixes.`
