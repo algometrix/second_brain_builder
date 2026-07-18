@@ -4,7 +4,7 @@
 ![GitHub downloads](https://img.shields.io/github/downloads/algometrix/second_brain_builder/total)
 ![License](https://img.shields.io/github/license/algometrix/second_brain_builder)
 
-Turn any topic into a folder of interlinked, deep-dive study notes: a generated index hub, mermaid concept maps, and wiki-links that light up Obsidian's graph view. Powered by an AI CLI (Claude Code, Gemini, or Codex) or a fully local Ollama model. It also explains selections into linked notes and enhances text in place. No API keys and no per-token billing: it runs on the AI subscription you already have, or a free local model. Desktop only. Works on Windows, macOS, and Linux.
+Turn any topic into a folder of interlinked, deep-dive study notes: a generated index hub, mermaid concept maps, and wiki-links that light up Obsidian's graph view. Powered by an AI CLI (Claude Code, Gemini, or Codex) or a fully local Ollama model. It also explains selections into linked notes and enhances text in place. No API keys and no per-token billing: it runs on the AI subscription you already have, or a free local model. Works in the Obsidian desktop app on Windows, macOS, and Linux; not available in the Obsidian mobile app (iOS/Android) because it needs to run local programs.
 
 ## Why This Plugin: No Extra AI Bills
 
@@ -143,7 +143,7 @@ All generation runs through a sequential background queue, so you can queue seve
 
 ## Requirements
 
-- Obsidian on desktop (Windows, macOS, or Linux). The plugin is desktop only because it spawns local processes.
+- The Obsidian desktop app on Windows, macOS, or Linux. The plugin does not work in the Obsidian mobile app (iOS/Android) because it needs to run local programs on your computer.
 - At least one AI backend from the next section. Installing the plugin is not enough by itself; nothing generates until a backend is set up.
 - Node.js 16+ and npm, but only if you use a CLI backend (Claude, Gemini, Codex) or install the plugin from GitHub. Ollama users installing from the community directory do not need Node.
 
