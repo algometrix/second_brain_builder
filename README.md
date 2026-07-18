@@ -192,7 +192,7 @@ npm install -g @anthropic-ai/claude-code
 claude          # run once in a terminal to log in
 ```
 
-The plugin calls the CLI in read-only mode with file-modifying tools disabled.
+The plugin calls the CLI in read-only mode with file-modifying tools disabled. It uses the Sonnet model by default because the CLI's own default model burns through plan limits much faster; set a different model in settings if you want.
 
 > **Note:** the plugin invokes `claude -p` (print mode). Anthropic has announced (currently paused) plans to bill programmatic usage like `claude -p` separately from Pro/Max subscription limits, as extra usage at API rates. If that change ships, plugin usage may no longer be covered by your plan. Also note that generating notes can consume a lot of tokens, especially with large selections or batch generation, so watch your usage limits.
 
@@ -344,7 +344,7 @@ Rebuild. Both files are gitignored, so your prompts stay private. You can also a
 |---|---|---|
 | AI provider | `claude`, `gemini`, `codex`, or `ollama` | `claude` |
 | Claude CLI path | Path to the `claude` executable | `claude` |
-| Claude model | Optional model override | *(CLI default)* |
+| Claude model | Model override (e.g. `opus`, `claude-sonnet-4-6`) | `sonnet` |
 | Gemini CLI path / model | Same, for Gemini | `gemini` / *(default)* |
 | Codex CLI path / model | Same, for Codex | `codex` / *(default)* |
 | Ollama URL / model | Local API endpoint and model name | `http://localhost:11434` / `llama3` |

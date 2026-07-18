@@ -72,10 +72,10 @@ export class ClaudeExplainerSettingTab extends PluginSettingTab {
 
 			new Setting(containerEl)
 				.setName("Claude model")
-				.setDesc("Optional model override (e.g. claude-sonnet-4-6). Leave empty for default.")
+				.setDesc("Model to use (e.g. sonnet, opus, claude-sonnet-4-6). Leave empty for sonnet, which keeps token use low.")
 				.addText((text) =>
 					text
-						.setPlaceholder("")
+						.setPlaceholder("sonnet")
 						.setValue(this.plugin.settings.modelFlag)
 						.onChange(async (value) => {
 							this.plugin.settings.modelFlag = value.trim();

@@ -1835,9 +1835,9 @@ Rules:
 					"--max-turns", "10",
 					"--disallowedTools", "Edit,Write,Read,Bash,PowerShell,Glob,Grep",
 				];
-				if (this.settings.modelFlag) {
-					args.push("--model", this.settings.modelFlag);
-				}
+				// Default to sonnet: the CLI's own default model is far more
+				// token expensive for note generation.
+				args.push("--model", this.settings.modelFlag || "sonnet");
 			}
 
 			const providerLabel = PROVIDER_LABELS[this.settings.aiProvider];
