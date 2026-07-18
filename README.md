@@ -24,6 +24,21 @@ One prompt ("why is the dollar the world's reserve currency?") produced this ind
 
 <img src="assets/set_of_notes.png" alt="File explorer showing the folder of generated, interlinked notes" width="380">
 
+## Contents
+
+- [Why This Plugin: No Extra AI Bills](#why-this-plugin-no-extra-ai-bills)
+- [Quick Start](#quick-start)
+- [Features and When to Use Them](#features-and-when-to-use-them)
+- [Requirements](#requirements)
+- [Setting Up an AI Backend](#setting-up-an-ai-backend)
+- [Installation](#installation)
+- [Note Modes](#note-modes)
+- [Settings](#settings)
+- [Vault Fix Scripts](#vault-fix-scripts)
+- [Privacy](#privacy) · [Security](#security)
+- [Troubleshooting](#troubleshooting)
+- [Feedback and Support](#feedback-and-support)
+
 ## Quick Start
 
 Four steps from zero to your first generated note. Each step links to a detailed section below if you get stuck.
@@ -49,6 +64,18 @@ Four steps from zero to your first generated note. Each step links to a detailed
 If the plugin says it cannot find the CLI, see [Troubleshooting](#troubleshooting); it is almost always a PATH issue with a one-line fix.
 
 ## Features and When to Use Them
+
+Not sure where to start? Match what you want to do to a command:
+
+| You want to | Run |
+|---|---|
+| Learn a whole subject from one prompt | [Generate knowledge notes in folder](#generate-knowledge-notes-in-folder) |
+| Turn a term in a note into its own linked note | [Explain selection](#explain-selection-note-creation) |
+| Grow a folder of deep-dive notes under the current note | [Create sub-note from selection](#create-sub-notes) |
+| Improve text right where it is | [Enhance selection](#enhance-selection-inline-actions) |
+| Get review questions or exercises for a finished note | [Analyze current note](#analyze-current-note) |
+| Start a subject with no note open | [Generate notes from topic](#generate-notes-from-topic) |
+| Fill in empty stub notes you linked earlier | [Fill empty note](#fill-empty-note) |
 
 ### Generate Knowledge Notes in Folder
 
@@ -150,6 +177,13 @@ All generation runs through a sequential background queue, so you can queue seve
 ## Setting Up an AI Backend
 
 Pick one provider in **Settings → Second Brain Builder → AI provider**. All four work on Windows, macOS, and Linux.
+
+| Provider | What it costs you | Note quality | Where your text goes | You need |
+|---|---|---|---|---|
+| **Claude Code CLI** (default) | Covered by your Claude plan | Best | Anthropic, under your account | Node.js + Claude account |
+| **Gemini CLI** | Covered by your Google plan (has a free tier) | High | Google, under your account | Node.js + Google account |
+| **Codex CLI** | Covered by your ChatGPT plan | High | OpenAI, under your account | Node.js + ChatGPT account |
+| **Ollama** | Free | Depends on the model you pull | Nowhere, stays on your machine | Ollama installed |
 
 ### Claude Code CLI (default)
 
@@ -356,6 +390,7 @@ The plugin spawns the AI CLI you configure, which is why Obsidian shows a "shell
 - Each CLI runs in a restricted mode: Claude with `--disallowedTools` (no file edits, no shell), Gemini with `--approval-mode plan`, Codex with `--sandbox read-only`.
 - Only the executable path and model name from your own settings are used to build the command; the plugin never runs commands supplied by note content or by the model's output.
 - All generated content is written through Obsidian's vault API, not directly to disk.
+- The plugin makes no network requests of its own. The only network traffic is what the CLI you chose sends under your account, or the request to the Ollama URL you configure.
 
 ## Development
 
@@ -377,6 +412,11 @@ Use the [Hot-Reload plugin](https://github.com/pjeby/hot-reload) for instant rel
 | Ollama errors | Check the server is running: `curl http://localhost:11434` and that the model is pulled |
 | Timeout | Large contexts are slow; select less text or use a faster model |
 | Build fails on `modes.json` | Run `node scripts/sync-modes.js`, or check that the path in `modes.config.json` exists |
+
+## Feedback and Support
+
+- Found a bug or want a feature? [Open an issue](https://github.com/algometrix/second_brain_builder/issues).
+- If the plugin is useful to you, a star on GitHub helps other people find it.
 
 ## License
 
