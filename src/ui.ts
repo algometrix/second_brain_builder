@@ -35,7 +35,14 @@ export function createModeGrid(
 		card.addEventListener("click", () => onCardClick(mode, card));
 	}
 
-	search.addEventListener("keydown", (e) => { e.stopPropagation(); });
+	search.addEventListener("keydown", (e) => {
+		e.stopPropagation();
+		if (e.key === "Enter") {
+			e.preventDefault();
+			const firstVisible = cards.find(c => !c.el.hasClass("ch-hidden"));
+			firstVisible?.el.click();
+		}
+	});
 	search.addEventListener("input", () => {
 		const q = search.value.toLowerCase();
 		for (const c of cards) {

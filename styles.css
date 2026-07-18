@@ -44,8 +44,10 @@
   margin-bottom: 10px;
 }
 
+/* !important so this wins over .ch-card's display: flex, which has equal
+   specificity but appears later in the sheet. */
 .ch-hidden {
-  display: none;
+  display: none !important;
 }
 
 /* ─── Mode picker grid ─────────────────────────────────────────── */
