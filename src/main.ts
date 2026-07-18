@@ -59,11 +59,25 @@ export default class ClaudeExplainerPlugin extends Plugin {
 				const from = editor.getCursor("from");
 				const to = editor.getCursor("to");
 				new NoteCreatorModal(this.app, this.getStandardModes(), selection, this.settings.lastModeId || this.settings.defaultModeId, (configs) => {
-					const linkReplacement = this.buildLinkReplacement(editor, from, to, selection, configs);
+					const linkReplacement = this.buildLinkReplacement(editor, from, to, selection, configs, view.file?.parent?.path ?? "");
 					for (const config of configs) {
 						void this.enqueueNote(editor, view, selection, config, linkReplacement);
 					}
 				}, (modeId) => { void this.saveLastMode(modeId); }).open();
+			},
+		});
+
+		// ── Sub-note creation command ──
+		this.addCommand({
+			id: "create-sub-note",
+			name: "Create sub-note from selection with AI",
+			editorCallback: (editor: Editor, view: MarkdownView) => {
+				const selection = editor.getSelection().trim();
+				if (!selection) {
+					new Notice("Select some text first.");
+					return;
+				}
+				this.openSubNoteCreator(editor, view, selection, editor.getCursor("from"), editor.getCursor("to"));
 			},
 		});
 
@@ -224,11 +238,20 @@ export default class ClaudeExplainerPlugin extends Plugin {
 							.setIcon("book-open")
 							.onClick(() => {
 								new NoteCreatorModal(this.app, this.getStandardModes(), selection, this.settings.lastModeId || this.settings.defaultModeId, (configs) => {
-									const linkReplacement = this.buildLinkReplacement(editor, from, to, selection, configs);
+									const linkReplacement = this.buildLinkReplacement(editor, from, to, selection, configs, view.file?.parent?.path ?? "");
 									for (const config of configs) {
 										void this.enqueueNote(editor, view, selection, config, linkReplacement);
 									}
 								}, (modeId) => { void this.saveLastMode(modeId); }).open();
+							});
+					});
+
+					// Sub-note creation entry
+					menu.addItem((item) => {
+						item.setTitle(`Create sub-note from "${selLabel}"`)
+							.setIcon("folder-tree")
+							.onClick(() => {
+								this.openSubNoteCreator(editor, view, selection, from, to);
 							});
 					});
 
@@ -470,6 +493,11 @@ export default class ClaudeExplainerPlugin extends Plugin {
 		await this.saveSettings();
 	}
 
+	async saveLastSubfolder(subfolder: string) {
+		this.settings.lastSubfolder = subfolder;
+		await this.saveSettings();
+	}
+
 	removeFromQueue(index: number) {
 		this.queue.splice(index, 1);
 		this.updateStatusBar();
@@ -582,19 +610,88 @@ export default class ClaudeExplainerPlugin extends Plugin {
 		appWithSettings.setting.openTabById(this.manifest.id);
 	}
 
+	private openSubNoteCreator(editor: Editor, view: MarkdownView, selection: string, from: EditorPosition, to: EditorPosition) {
+		new NoteCreatorModal(
+			this.app,
+			this.getStandardModes(),
+			selection,
+			this.settings.lastModeId || this.settings.defaultModeId,
+			(configs) => {
+				const parentName = view.file?.basename ?? "";
+				const titles = configs.map(c => c.title);
+				const contextOverride = this.buildSelectionContext(editor, from, selection);
+				for (const config of configs) {
+					config.seriesInstructions = this.buildSubNoteSeriesInstructions(parentName, config.title, titles, selection);
+					config.contextOverride = contextOverride;
+				}
+				// If every topic came from the selected text (single term or a
+				// selected list), the links can replace the selection. Topics the
+				// user rewrote keep the selected prose intact, with links appended.
+				const topicsMatchSelection = configs.every(c =>
+					selection.toLowerCase().includes(c.title.toLowerCase())
+				);
+				const linkReplacement = this.buildLinkReplacement(editor, from, to, selection, configs, view.file?.parent?.path ?? "", !topicsMatchSelection);
+				for (const config of configs) {
+					void this.enqueueNote(editor, view, config.title, config, linkReplacement);
+				}
+				if (configs[0]?.subfolder) {
+					void this.saveLastSubfolder(configs[0].subfolder);
+				}
+			},
+			(modeId) => { void this.saveLastMode(modeId); },
+			this.settings.lastSubfolder || DEFAULT_SETTINGS.lastSubfolder,
+			view.file?.parent?.path ?? "",
+		).open();
+	}
+
+	// The note context sent with each sub-note: a window of the parent note
+	// centered on the selection, so the selected passage is always included
+	// even in long notes.
+	private buildSelectionContext(editor: Editor, from: EditorPosition, selection: string): string {
+		const content = editor.getValue();
+		if (content.length <= 2000) return content;
+		const selStart = editor.posToOffset(from);
+		const windowStart = Math.max(0, selStart - Math.floor((2000 - selection.length) / 2));
+		const windowEnd = Math.min(content.length, windowStart + 2000 + selection.length);
+		return (windowStart > 0 ? "...(earlier content omitted)\n" : "")
+			+ content.slice(windowStart, windowEnd)
+			+ (windowEnd < content.length ? "\n...(later content omitted)" : "");
+	}
+
+	private buildSubNoteSeriesInstructions(parentName: string, title: string, allTitles: string[], selection: string): string {
+		const siblings = allTitles.filter(t => t !== title);
+		const lines = [
+			`This note is part of a linked sub-note series generated from the note "${parentName}".`,
+			`The user selected this passage in that note: "${selection.replace(/"/g, '\\"')}". Stay grounded in it: the note should explain its topic in a way that illuminates this passage.`,
+			`Link back to the parent note as [[${parentName}]] in a Related Concepts or similar section.`,
+		];
+		if (siblings.length > 0) {
+			lines.push(`Sibling notes being generated in the same series: ${siblings.map(t => `[[${t}]]`).join(", ")}. Cross-link them with [[wiki-links]] wherever they are relevant to the content.`);
+		}
+		lines.push("Also reuse [[wiki-links]] that already appear in the provided context where relevant, so this note connects to the existing note series.");
+		return lines.join(" ");
+	}
+
 	private buildLinkReplacement(
 		editor: Editor,
 		from: EditorPosition,
 		to: EditorPosition,
 		selection: string,
-		configs: NoteConfig[]
+		configs: NoteConfig[],
+		folderPath: string,
+		keepSelectionText = false
 	): PendingLinkReplacement {
+		const links = configs.map(c => {
+			if (!c.subfolder) return `[[${c.title}]]`;
+			const dir = folderPath ? `${folderPath}/${c.subfolder}` : c.subfolder;
+			return `[[${dir}/${c.title}|${c.title}]]`;
+		});
 		return {
 			editor,
 			from,
 			to,
 			selection,
-			linksText: configs.map(c => `[[${c.title}]]`).join(" | "),
+			linksText: keepSelectionText ? `${selection} (${links.join(", ")})` : links.join(" | "),
 			applied: false,
 		};
 	}
@@ -627,8 +724,16 @@ export default class ClaudeExplainerPlugin extends Plugin {
 			return;
 		}
 
+		const targetFolder = config.subfolder
+			? normalizePath(folderPath ? `${folderPath}/${config.subfolder}` : config.subfolder)
+			: folderPath;
+		if (config.subfolder && !this.app.vault.getAbstractFileByPath(targetFolder)) {
+			// Sibling sub-notes enqueue concurrently and can race on the same
+			// folder; a real failure surfaces later in vault.create().
+			await this.app.vault.createFolder(targetFolder).catch(() => {});
+		}
 		const newNotePath = normalizePath(
-			folderPath ? `${folderPath}/${noteName}.md` : `${noteName}.md`
+			targetFolder ? `${targetFolder}/${noteName}.md` : `${noteName}.md`
 		);
 
 		const existing = this.app.vault.getAbstractFileByPath(newNotePath);
@@ -642,14 +747,18 @@ export default class ClaudeExplainerPlugin extends Plugin {
 		}
 
 		const contextLines = editor.getValue();
-		const contextSnippet = contextLines.length > 2000
+		const contextSnippet = config.contextOverride ?? (contextLines.length > 2000
 			? contextLines.slice(0, 2000) + "\n...(truncated)"
-			: contextLines;
+			: contextLines);
 
 		let fullPrompt = config.mode.prompt
 			.replace(/\{selection\}/g, selection.replace(/"/g, '\\"'))
 			.replace(/\{context\}/g, contextSnippet.replace(/"/g, '\\"'))
 			+ getOutputRules();
+
+		if (config.seriesInstructions) {
+			fullPrompt += `\n\n${config.seriesInstructions}`;
+		}
 
 		if (config.extraInstructions) {
 			fullPrompt += `\n\nAdditional instructions from the user:\n${config.extraInstructions}`;

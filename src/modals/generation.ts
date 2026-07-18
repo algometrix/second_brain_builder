@@ -1,7 +1,7 @@
 import { App, Modal, Notice } from "obsidian";
 import { InlineAction, InlineActionConfig, NoteConfig, NoteMode } from "../types";
 import { createModeGrid, renderModeCard, setModalTitle } from "../ui";
-import { sanitizeFilename } from "../utils";
+import { sanitizeFilename, splitIntoTopics } from "../utils";
 
 // ─── Note Creator Modal (multi-select) ───────────────────────────
 
@@ -14,10 +14,15 @@ export class NoteCreatorModal extends Modal {
 	selectedModes: NoteMode[];
 	titleValue: string;
 	extraValue: string;
+	subfolderDefault: string | null;
+	subfolderValue: string;
+	topicsValue: string;
+	parentFolderPath: string;
+	previewEl: HTMLDivElement | null;
 	btnEls: { id: string; el: HTMLElement }[];
 	submitBtnEl: HTMLButtonElement | null;
 
-	constructor(app: App, modes: NoteMode[], selection: string, lastModeId: string, onSubmit: (configs: NoteConfig[]) => void, onModeUsed?: (modeId: string) => void) {
+	constructor(app: App, modes: NoteMode[], selection: string, lastModeId: string, onSubmit: (configs: NoteConfig[]) => void, onModeUsed?: (modeId: string) => void, subfolderDefault?: string, parentFolderPath?: string) {
 		super(app);
 		this.modes = modes;
 		this.selection = String(selection || "");
@@ -27,17 +32,33 @@ export class NoteCreatorModal extends Modal {
 		this.selectedModes = [];
 		this.titleValue = sanitizeFilename(this.selection);
 		this.extraValue = "";
+		this.subfolderDefault = subfolderDefault ?? null;
+		this.subfolderValue = subfolderDefault ?? "";
+		this.topicsValue = splitIntoTopics(this.selection).join("\n");
+		this.parentFolderPath = parentFolderPath ?? "";
+		this.previewEl = null;
 		this.btnEls = [];
 		this.submitBtnEl = null;
+	}
+
+	parseTopics(): string[] {
+		return [...new Set(this.topicsValue.split("\n").map(t => sanitizeFilename(t)).filter(Boolean))];
 	}
 
 	onOpen(): void {
 		const el = this.contentEl;
 		el.empty();
 		this.modalEl.addClass("ch-modal");
-		setModalTitle(this, "Create note");
+		setModalTitle(this, this.subfolderDefault === null ? "Create note" : "Create sub-notes");
 
 		const wrapper = el.createDiv();
+
+		if (this.subfolderDefault !== null) {
+			const intro = wrapper.createDiv({ cls: "ch-flow" });
+			const sel = this.selection.length > 80 ? this.selection.slice(0, 80) + "..." : this.selection;
+			intro.createDiv({ cls: "ch-flow-selection", text: `Selected: "${sel}"` });
+			intro.createDiv({ text: "Each title below becomes its own note, generated using your selection and this note as context. Rename the titles to anything - the notes stay grounded in the selected text, and they link to each other and back to this note." });
+		}
 
 		wrapper.createDiv({ cls: "ch-label", text: "Note style" });
 		wrapper.createDiv({ cls: "ch-hint", text: "Click multiple to blend styles into one note" });
@@ -47,14 +68,47 @@ export class NoteCreatorModal extends Modal {
 
 		const sep = wrapper.createDiv({ cls: "ch-sep" });
 
-		sep.createDiv({ cls: "ch-label", text: "Note title" });
-		const titleInput = sep.createEl("input", { type: "text", cls: "ch-input" });
-		titleInput.value = this.titleValue;
-		titleInput.addEventListener("input", () => { this.titleValue = titleInput.value; });
-		titleInput.addEventListener("keydown", (e) => {
-			e.stopPropagation();
-			if (e.key === "Enter") { e.preventDefault(); this.doSubmit(); }
-		});
+		if (this.subfolderDefault === null) {
+			sep.createDiv({ cls: "ch-label", text: "Note title" });
+			const titleInput = sep.createEl("input", { type: "text", cls: "ch-input" });
+			titleInput.value = this.titleValue;
+			titleInput.addEventListener("input", () => { this.titleValue = titleInput.value; });
+			titleInput.addEventListener("keydown", (e) => {
+				e.stopPropagation();
+				if (e.key === "Enter") { e.preventDefault(); this.doSubmit(); }
+			});
+		} else {
+			sep.createDiv({ cls: "ch-label", text: "Sub-folder (created under this note's folder)" });
+			const subfolderInput = sep.createEl("input", { type: "text", cls: "ch-input" });
+			subfolderInput.value = this.subfolderValue;
+			subfolderInput.placeholder = "e.g. Components, Deep Dives...";
+			subfolderInput.addEventListener("input", () => {
+				this.subfolderValue = subfolderInput.value;
+				this.updatePreview();
+			});
+			subfolderInput.addEventListener("keydown", (e) => {
+				e.stopPropagation();
+				if (e.key === "Enter") { e.preventDefault(); this.doSubmit(); }
+			});
+
+			sep.createDiv({ cls: "ch-label", text: "Note titles (one per line)" });
+			sep.createDiv({ cls: "ch-hint", text: "Each line is the exact title of one new note" });
+			const topicsInput = sep.createEl("textarea", { cls: "ch-textarea" });
+			topicsInput.value = this.topicsValue;
+			topicsInput.rows = Math.min(8, Math.max(3, this.topicsValue.split("\n").length));
+			topicsInput.addEventListener("input", () => {
+				this.topicsValue = topicsInput.value;
+				this.updatePreview();
+				this.updateModeButtons();
+			});
+			topicsInput.addEventListener("keydown", (e) => {
+				e.stopPropagation();
+				if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); this.doSubmit(); }
+			});
+
+			this.previewEl = sep.createDiv();
+			this.updatePreview();
+		}
 
 		sep.createDiv({ cls: "ch-label", text: "Extra instructions (optional)" });
 		const extraInput = sep.createEl("textarea", { cls: "ch-textarea" });
@@ -86,6 +140,7 @@ export class NoteCreatorModal extends Modal {
 			this.selectedModes.push(mode);
 		}
 		this.updateModeButtons();
+		this.updatePreview();
 	}
 
 	updateModeButtons(): void {
@@ -94,17 +149,43 @@ export class NoteCreatorModal extends Modal {
 			b.el.toggleClass("is-selected", selectedIds.has(b.id));
 		}
 		if (this.submitBtnEl) {
+			const generateLabel = this.subfolderDefault === null
+				? "Generate"
+				: `Generate ${this.parseTopics().length || "?"} sub-note${this.parseTopics().length === 1 ? "" : "s"}`;
 			if (this.selectedModes.length === 0) {
 				this.submitBtnEl.disabled = true;
 				this.submitBtnEl.setText("Select a note style");
 			} else if (this.selectedModes.length === 1) {
 				this.submitBtnEl.disabled = false;
-				this.submitBtnEl.setText("Generate - " + this.selectedModes[0].name);
+				this.submitBtnEl.setText(`${generateLabel} - ${this.selectedModes[0].name}`);
 			} else {
 				this.submitBtnEl.disabled = false;
-				this.submitBtnEl.setText(`Generate blended - ${this.selectedModes.map(m => m.name).join(" + ")}`);
+				this.submitBtnEl.setText(`${generateLabel} blended - ${this.selectedModes.map(m => m.name).join(" + ")}`);
 			}
 		}
+	}
+
+	updatePreview(): void {
+		if (!this.previewEl) return;
+		this.previewEl.empty();
+		const subfolder = sanitizeFilename(this.subfolderValue);
+		const dir = this.parentFolderPath
+			? `${this.parentFolderPath}/${subfolder || "?"}`
+			: (subfolder || "?");
+		const titles = this.parseTopics();
+		this.previewEl.createDiv({ cls: "ch-label", text: "What will happen" });
+		if (titles.length === 0) {
+			this.previewEl.createDiv({ cls: "ch-hint", text: "Nothing yet - add at least one title line above" });
+			return;
+		}
+		const styleName = this.selectedModes.length > 0
+			? this.selectedModes.map(m => m.name).join(" + ")
+			: "the selected style";
+		const list = this.previewEl.createDiv({ cls: "ch-preview-list" });
+		for (const title of titles) {
+			list.createDiv({ cls: "ch-preview-item", text: `${dir}/${title}.md - a ${styleName} note about "${title}"` });
+		}
+		list.createDiv({ cls: "ch-preview-note", text: "Each note is written from your selected passage and the surrounding note, and links to the other notes above and back to this note." });
 	}
 
 	doSubmit(): void {
@@ -112,12 +193,27 @@ export class NoteCreatorModal extends Modal {
 			new Notice("Pick at least one note style.");
 			return;
 		}
-		const title = this.titleValue.trim();
-		if (!title) {
-			new Notice("Note title cannot be empty.");
-			return;
+		let titles: string[];
+		let subfolder: string | undefined;
+		if (this.subfolderDefault === null) {
+			const title = sanitizeFilename(this.titleValue.trim());
+			if (!title) {
+				new Notice("Note title cannot be empty.");
+				return;
+			}
+			titles = [title];
+		} else {
+			subfolder = sanitizeFilename(this.subfolderValue);
+			if (!subfolder) {
+				new Notice("Sub-folder name cannot be empty.");
+				return;
+			}
+			titles = this.parseTopics();
+			if (titles.length === 0) {
+				new Notice("Add at least one sub-note title.");
+				return;
+			}
 		}
-		const sanitizedTitle = sanitizeFilename(title);
 		this.close();
 
 		// Remember the last used mode (first selected)
@@ -130,11 +226,12 @@ export class NoteCreatorModal extends Modal {
 			finalMode = NoteCreatorModal.createBlendedMode(this.selectedModes);
 		}
 
-		this.onSubmit([{
+		this.onSubmit(titles.map(title => ({
 			mode: finalMode,
-			title: sanitizedTitle,
+			title,
 			extraInstructions: this.extraValue.trim(),
-		}]);
+			subfolder,
+		})));
 	}
 
 	static createBlendedMode(modes: NoteMode[]): NoteMode {

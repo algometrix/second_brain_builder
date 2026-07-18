@@ -38,7 +38,7 @@ Source lives in `src/`, bundled to a single root `main.js` by esbuild (entry poi
 - **manifest.json** -- Obsidian plugin manifest (id: `second-brain-builder`)
 - **scripts/** -- build helpers and vault fix scripts:
   - **sync-modes.js** -- prepares `modes.json` before builds (see above); wired into `npm run build` and `npm run dev`
-  - **vault-root.js** -- shared vault path resolution for the fix scripts (first non-flag CLI argument, or `OBSIDIAN_VAULT` env var)
+  - **vault-root.js** -- shared vault path resolution for the fix scripts (first non-flag CLI argument, `OBSIDIAN_VAULT` env var, or `OBSIDIAN_VAULT=` in a gitignored repo-root `.env`)
   - **fix-all.js** -- unified runner that executes all fix scripts below in order
   - **fix-callout-fences.js** -- fixes callout code fences missing the `> ` prefix on closing ``` or content lines
   - **fix-currency-dollars.js** -- escapes unescaped `$` currency signs that Obsidian misinterprets as LaTeX
@@ -49,7 +49,7 @@ Source lives in `src/`, bundled to a single root `main.js` by esbuild (entry poi
   - **fix-mermaid-quotes.js** -- strips nested double quotes inside already-quoted mermaid labels (inner `"` to `'`)
   - **fix-mermaid-list.js** -- fixes "Unsupported markdown: list" errors by converting `N.`/`N)` to `N:` in labels and joining `- item` lines with `<br/>`
 
-All fix scripts share the same interface: `node scripts/<script> <vault-path>` for detect-only, add `--fix` to apply. The vault path can also come from the `OBSIDIAN_VAULT` environment variable.
+All fix scripts share the same interface: `node scripts/<script> <vault-path>` for detect-only, add `--fix` to apply. The vault path can also come from the `OBSIDIAN_VAULT` environment variable or a gitignored repo-root `.env` file.
 
 ## Architecture
 
@@ -65,7 +65,7 @@ All fix scripts share the same interface: `node scripts/<script> <vault-path>` f
 
 ### Two Command Families
 
-- **Note creation** ("Explain selection"): creates a new note from selection, replaces selection with a `[[wiki-link]]`. Uses modes from `modes.json` + custom user modes.
+- **Note creation** ("Explain selection"): creates a new note from selection, replaces selection with a `[[wiki-link]]`. Uses modes from `modes.json` + custom user modes. The "Create sub-note" variant splits the selection into multiple topics, generates one note per topic into a named sub-folder of the current note's folder, and injects series instructions so the notes cross-link each other and the parent note.
 - **Inline actions** ("Enhance selection"): transforms selected text in-place (expand, simplify, add examples, add diagram, summarize, challenge, fix & polish, ELI5, translate to code). Defined as `INLINE_ACTIONS` in main.ts.
 
 ### AI Provider Abstraction

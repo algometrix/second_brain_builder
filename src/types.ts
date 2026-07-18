@@ -24,6 +24,9 @@ export interface NoteConfig {
 	mode: NoteMode;
 	title: string;
 	extraInstructions: string;
+	subfolder?: string;
+	seriesInstructions?: string;
+	contextOverride?: string;
 }
 
 export interface InlineActionConfig {
@@ -91,6 +94,7 @@ export interface ClaudeExplainerSettings {
 	modelFlag: string;
 	defaultModeId: string;
 	lastModeId: string;
+	lastSubfolder: string;
 	customModes: NoteMode[];
 	enableLogging: boolean;
 	aiProvider: AIProvider;
@@ -108,6 +112,7 @@ export const DEFAULT_SETTINGS: ClaudeExplainerSettings = {
 	modelFlag: "",
 	defaultModeId: "",
 	lastModeId: "",
+	lastSubfolder: "Deep Dives",
 	customModes: [],
 	enableLogging: true,
 	aiProvider: "claude",

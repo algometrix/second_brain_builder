@@ -22,6 +22,18 @@ export function sanitizeFilename(name: string): string {
 	);
 }
 
+export function splitIntoTopics(text: string): string[] {
+	const parts = text
+		.split(/\r?\n|[,;]/)
+		.map(p => p.replace(/^[-*•\d.)\s]+/, "").trim())
+		.filter(Boolean);
+	// Only treat the selection as a topic list when every part is short and
+	// title-like; otherwise it is prose (e.g. a sentence with commas) and the
+	// user will name the topics themselves.
+	const looksLikeList = parts.length > 1 && parts.every(p => p.length <= 50 && p.split(/\s+/).length <= 6);
+	return looksLikeList ? [...new Set(parts)] : [text.replace(/\s+/g, " ").trim()];
+}
+
 export function extractJsonArray(raw: string): string {
 	const start = raw.indexOf("[");
 	const end = raw.lastIndexOf("]");

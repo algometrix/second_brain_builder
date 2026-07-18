@@ -4,7 +4,19 @@
 ![GitHub downloads](https://img.shields.io/github/downloads/algometrix/second_brain_builder/total)
 ![License](https://img.shields.io/github/license/algometrix/second_brain_builder)
 
-Turn any topic into a folder of interlinked, deep-dive study notes: a generated index hub, mermaid concept maps, and wiki-links that light up Obsidian's graph view. Powered by an AI CLI (Claude Code, Gemini, or Codex) or a fully local Ollama model. It also explains selections into linked notes and enhances text in place. Desktop only. Works on Windows, macOS, and Linux.
+Turn any topic into a folder of interlinked, deep-dive study notes: a generated index hub, mermaid concept maps, and wiki-links that light up Obsidian's graph view. Powered by an AI CLI (Claude Code, Gemini, or Codex) or a fully local Ollama model. It also explains selections into linked notes and enhances text in place. No API keys and no per-token billing: it runs on the AI subscription you already have, or a free local model. Desktop only. Works on Windows, macOS, and Linux.
+
+## Why This Plugin: No Extra AI Bills
+
+Most AI note plugins ask for an API key and bill you per token, on top of whatever AI subscription you already pay for. This plugin is designed around a different idea: **note generation should not cost you anything extra.**
+
+- **Use the subscription you already have.** The plugin drives the official CLI tools (Claude Code, Gemini CLI, Codex CLI) that come with a Claude, Google, or ChatGPT plan. You log in to the CLI once with your normal account. No API key, no separate billing, no per-note charges.
+- **Or pay nothing at all.** If you have no subscription, or you want your notes to stay fully private, point the plugin at a local [Ollama](https://ollama.com) model. It runs on your own machine, costs nothing, and nothing ever leaves your computer.
+- **Switch anytime.** All four backends sit behind one setting. Start with Ollama for free, move to a CLI when you want higher quality, or mix depending on the task.
+
+The goal is simple: if you already pay for an AI service, your notes are covered by it, and if you do not, a local model gets you there for free.
+
+> **Keep an eye on your usage.** Generating notes still consumes tokens against your plan's limits, and batch features like folder generation can use a lot in one run. Watch your usage while generating, especially with large selections or long series. Ollama has no limits since everything runs locally.
 
 One prompt ("why is the dollar the world's reserve currency?") produced this index hub and the 16 linked notes behind it:
 
@@ -69,6 +81,12 @@ Select a word or phrase, run **"Explain selection with AI"** (or right-click the
 <img src="assets/enhance.png" alt="Selection right-click menu highlighting Create note from the selected phrase" width="720">
 
 Use this when a term deserves its own note and you want your vault to grow into a linked knowledge base while you read.
+
+### Create Sub-Notes
+
+Select text in a note and run **"Create sub-note from selection with AI"** or right-click → **Create sub-note**. The modal asks for a sub-folder name and a note style, plus a topic list with one note topic per line. If the selection looks like a list ("Kafka, Redis, WebSocket Gateway"), the topics are prefilled from it; if it is prose ("US stopped redeeming dollars for gold"), it stays one line you can rewrite into whatever topics you actually want. On submit, each topic becomes its own note inside the sub-folder under the current note's folder. The generated notes cross-link each other, link back to the parent note, and reuse wiki-links from the surrounding context. Topics taken from the selection replace it with links; rewritten topics keep your text and append the links after it. The sub-folder name is remembered for next time.
+
+Use this to grow a deep-dive layer under an existing series, for example selecting "Kafka, Redis, WebSocket Gateway" in a system design note and generating a linked `Components` folder in one step.
 
 ### Enhance Selection (inline actions)
 
@@ -304,7 +322,7 @@ Rebuild. Both files are gitignored, so your prompts stay private. You can also a
 
 LLMs occasionally emit markdown that Obsidian renders badly, mostly around mermaid diagrams and callouts. The `scripts/` folder contains standalone fixers that scan every `.md` file in a vault, report problems, and optionally repair them.
 
-All scripts take the vault path as the first argument (or the `OBSIDIAN_VAULT` environment variable) and are detect-only unless you pass `--fix`:
+All scripts take the vault path as the first argument, or from the `OBSIDIAN_VAULT` environment variable, or from an `OBSIDIAN_VAULT=` line in a gitignored `.env` file at the repo root. They are detect-only unless you pass `--fix`:
 
 ```bash
 node scripts/fix-all.js "/path/to/YourVault"          # detect only, all fixers
