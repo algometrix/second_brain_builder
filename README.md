@@ -37,6 +37,7 @@ One prompt ("why is the dollar the world's reserve currency?") produced this ind
 - [Vault Fix Scripts](#vault-fix-scripts)
 - [Privacy](#privacy) · [Security](#security)
 - [Troubleshooting](#troubleshooting)
+- [FAQ](#faq)
 - [Feedback and Support](#feedback-and-support)
 
 ## Quick Start
@@ -412,6 +413,35 @@ Use the [Hot-Reload plugin](https://github.com/pjeby/hot-reload) for instant rel
 | Ollama errors | Check the server is running: `curl http://localhost:11434` and that the model is pulled |
 | Timeout | Large contexts are slow; select less text or use a faster model |
 | Build fails on `modes.json` | Run `node scripts/sync-modes.js`, or check that the path in `modes.config.json` exists |
+
+## FAQ
+
+**Do I need an API key?**
+No. The CLI backends log in with your normal account (the same login you use for Claude, Gemini, or ChatGPT on the web), and Ollama needs no account at all. The plugin never asks for an API key.
+
+**Does it work with a Claude Pro or Max subscription?**
+Yes. The plugin drives the Claude Code CLI, which authenticates with your Claude account. Be aware that Anthropic has announced (currently paused) plans to bill programmatic `claude -p` usage separately from Pro/Max limits; see the note under [Claude Code CLI](#claude-code-cli-default).
+
+**Can I use it completely offline and free?**
+Yes. Install [Ollama](https://ollama.com), pull a model, and set the provider to Ollama. Generation runs entirely on your machine, costs nothing, and needs no internet connection once the model is downloaded.
+
+**How much does it cost?**
+The plugin is free and open source. Note generation uses whichever backend you configure, so it costs either nothing (Ollama) or whatever your existing AI plan already covers. There is no separate charge from the plugin.
+
+**Does it work on iPhone or Android?**
+No. It runs in the Obsidian desktop app on Windows, macOS, and Linux only, because it needs to launch local programs (the AI CLIs) or reach a local Ollama server. Mobile Obsidian cannot do either.
+
+**Which backend produces the best notes?**
+Claude generally produces the most detailed notes, with Gemini and Codex close behind. Local Ollama quality depends on the model you pull; larger models write noticeably better notes but run slower. See the [provider comparison](#setting-up-an-ai-backend).
+
+**Is my note content private?**
+With Ollama, nothing leaves your machine. With a CLI backend, your selected text and surrounding note context go to that provider under your own account and their terms. The plugin itself collects nothing and makes no network requests of its own. See [Privacy](#privacy) and [Security](#security).
+
+**Can I write my own prompts?**
+Yes. Note styles ("modes") are fully customizable: add them in the plugin settings without rebuilding, or maintain your own [modes file](#note-modes) and build it into the plugin.
+
+**How is this different from other AI plugins for Obsidian?**
+Two things: it does not bill you per token or ask for an API key, and it generates whole interlinked note series (an index hub plus cross-linked notes that populate your graph view) rather than single chat responses.
 
 ## Feedback and Support
 
