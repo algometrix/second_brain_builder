@@ -1844,10 +1844,7 @@ Rules:
 			logger.info(`Spawning [${providerLabel}]: ${execPath} ${args.map(a => a.length > 40 ? a.slice(0, 40) + "..." : a).join(" ")}`);
 			logger.info(`Stdin prompt length: ${prompt.length} chars`);
 
-			const proc = spawnCli(execPath, args, {
-				shell: true,
-				windowsHide: true,
-			});
+			const proc = spawnCli(execPath, args);
 
 			let stdout = "";
 			let stderr = "";

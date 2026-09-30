@@ -408,6 +408,7 @@ Use the [Hot-Reload plugin](https://github.com/pjeby/hot-reload) for instant rel
 |---|---|
 | "command not found" / spawn error | Put the absolute CLI path in settings. Find it with `where claude` (Windows) or `which claude` (macOS/Linux) |
 | CLI works in terminal but not in Obsidian (macOS/Linux) | Apps launched from the dock do not inherit your shell PATH. Use the absolute path in settings, e.g. `/usr/local/bin/claude` or `~/.nvm/versions/node/<ver>/bin/claude` |
+| CLI path with extra words (macOS/Linux) | The path setting must be a single executable path. Commands like `node /x/codex.js` or `FOO=1 claude` are not run through a shell; wrap them in a small script with a shebang and point the setting at it |
 | Windows path | npm installs usually land at `C:\Users\<you>\AppData\Roaming\npm\claude.cmd` |
 | Empty or garbled output | Verify the CLI works standalone first, e.g. `claude -p "hello"` |
 | Ollama errors | Check the server is running: `curl http://localhost:11434` and that the model is pulled |
