@@ -6,6 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 An Obsidian plugin ("Second Brain Builder") that generates detailed explanation notes using Claude Code CLI, Gemini CLI, Codex CLI, or a local Ollama server. Users select text in a note, pick a teaching style (mode), and the plugin spawns the CLI to produce a new note or inline enhancement. Desktop only; supports Windows, macOS, and Linux.
 
+## Beauty Review
+
+This is a TypeScript codebase. When reviewing code here (`/code-review`, or any request to review, critique, or audit changes), invoke the global `ts-js-beauty-reviewer` agent alongside any other reviewers. It judges intent, scope, type-level contracts, async/error handling, tests, and measured performance — not just lint. Run it on the changed `.ts` files; treat its correctness and security findings as must-fix and its taste notes as suggestions.
+
 ## Build Commands
 
 ```bash
@@ -48,6 +52,7 @@ Source lives in `src/`, bundled to a single root `main.js` by esbuild (entry poi
   - **fix-mermaid-parens.js** -- quotes unquoted mermaid node labels containing parentheses or slashes
   - **fix-mermaid-quotes.js** -- strips nested double quotes inside already-quoted mermaid labels (inner `"` to `'`)
   - **fix-mermaid-list.js** -- fixes "Unsupported markdown: list" errors by converting `N.`/`N)` to `N:` in labels and joining `- item` lines with `<br/>`
+  - **fix-mermaid-sequence-note.js** -- in `sequenceDiagram` blocks, folds a note/message whose text wrapped onto a following list line (`1.`/`1)`/`-`/`*`) back into the preceding line joined with `<br/>` (converts `N.`/`N)` to `N:`, strips bullets); fixes `got '1'` parse errors from lines starting with a bare number
 
 All fix scripts share the same interface: `node scripts/<script> <vault-path>` for detect-only, add `--fix` to apply. The vault path can also come from the `OBSIDIAN_VAULT` environment variable or a gitignored repo-root `.env` file.
 

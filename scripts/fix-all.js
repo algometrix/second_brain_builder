@@ -23,6 +23,7 @@ const scripts = [
   'fix-mermaid-parens.js',
   'fix-mermaid-quotes.js',
   'fix-mermaid-list.js',
+  'fix-mermaid-sequence-note.js',
 ];
 
 for (const script of scripts) {
