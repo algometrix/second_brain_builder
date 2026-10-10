@@ -311,7 +311,7 @@ Rebuild. Both files are gitignored, so your prompts stay private. You can also a
 
 ### Sample modes
 
-`modes.sample.json` ships 23 general-purpose modes:
+`modes.sample.json` ships 24 general-purpose modes:
 
 | Mode | Best for |
 |---|---|
@@ -336,6 +336,7 @@ Rebuild. Both files are gitignored, so your prompts stay private. You can also a
 | Case Study | Real-world case analysis |
 | Question Generator (full note) | Appending review questions to a finished note |
 | Active Recall Prep (full note) | Fill-in-the-gap study exercises |
+| Lesson | One scoped skill: minimal knowledge, retrieval practice, reference card |
 | Deep Dive (General) | Long-form, evidence-based deep dives |
 | Learning Path & Resources | Curated beginner-to-expert learning paths |
 
