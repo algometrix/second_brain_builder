@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 320" role="img" aria-label="Second Brain Builder">
+  <rect width="1280" height="320" rx="16" fill="#1e1f26"/>
+  <line x1="850" y1="70" x2="925" y2="48" stroke="#3a3a48" stroke-width="2"/>
+  <line x1="1040" y1="42" x2="1135" y2="72" stroke="#3a3a48" stroke-width="2"/>
+  <line x1="1135" y1="72" x2="1195" y2="150" stroke="#3a3a48" stroke-width="2"/>
+  <line x1="1150" y1="245" x2="1050" y2="280" stroke="#3a3a48" stroke-width="2"/>
+  <line x1="935" y1="268" x2="842" y2="225" stroke="#3a3a48" stroke-width="2"/>
+  <line x1="842" y1="225" x2="800" y2="145" stroke="#3a3a48" stroke-width="2"/>
+  <line x1="800" y1="145" x2="850" y2="70" stroke="#3a3a48" stroke-width="2"/>
+  <line x1="1195" y1="150" x2="1150" y2="245" stroke="#3a3a48" stroke-width="2"/>
+  <line x1="1000" y1="160" x2="850" y2="70" stroke="#5b4f8c" stroke-width="2.5"/>
+  <line x1="1000" y1="160" x2="925" y2="48" stroke="#5b4f8c" stroke-width="2.5"/>
+  <line x1="1000" y1="160" x2="1040" y2="42" stroke="#5b4f8c" stroke-width="2.5"/>
+  <line x1="1000" y1="160" x2="1135" y2="72" stroke="#5b4f8c" stroke-width="2.5"/>
+  <line x1="1000" y1="160" x2="1195" y2="150" stroke="#5b4f8c" stroke-width="2.5"/>
+  <line x1="1000" y1="160" x2="1150" y2="245" stroke="#5b4f8c" stroke-width="2.5"/>
+  <line x1="1000" y1="160" x2="1050" y2="280" stroke="#5b4f8c" stroke-width="2.5"/>
+  <line x1="1000" y1="160" x2="935" y2="268" stroke="#5b4f8c" stroke-width="2.5"/>
+  <line x1="1000" y1="160" x2="842" y2="225" stroke="#5b4f8c" stroke-width="2.5"/>
+  <line x1="1000" y1="160" x2="800" y2="145" stroke="#5b4f8c" stroke-width="2.5"/>
+  <circle cx="850" cy="70" r="11" fill="#7f6bc4"/>
+  <circle cx="925" cy="48" r="9" fill="#7f6bc4"/>
+  <circle cx="1040" cy="42" r="12" fill="#7f6bc4"/>
+  <circle cx="1135" cy="72" r="10" fill="#7f6bc4"/>
+  <circle cx="1195" cy="150" r="12" fill="#7f6bc4"/>
+  <circle cx="1150" cy="245" r="10" fill="#7f6bc4"/>
+  <circle cx="1050" cy="280" r="11" fill="#7f6bc4"/>
+  <circle cx="935" cy="268" r="9" fill="#7f6bc4"/>
+  <circle cx="842" cy="225" r="12" fill="#7f6bc4"/>
+  <circle cx="800" cy="145" r="9" fill="#7f6bc4"/>
+  <circle cx="1000" cy="160" r="38" fill="#a88bfa" opacity="0.2"/>
+  <circle cx="1000" cy="160" r="26" fill="#a88bfa"/>
+  <text x="72" y="150" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="60" font-weight="700" fill="#f4f4f6">Second Brain Builder</text>
+  <text x="74" y="200" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="25" fill="#a9abb6">One topic in. A folder of linked study notes out.</text>
+</svg>
